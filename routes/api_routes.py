@@ -80,7 +80,8 @@ def ask():
             if any(keyword in user_input for keyword in ["類型", "什麼詐騙", "哪種類型"]):
                 final_reply = f"🧠 你上次的詐騙類型是「{last_scam_type}」。"
             elif any(keyword in user_input for keyword in ["機率", "風險", "可能性"]):
-                final_reply = "📊 我記得你上次問到的案件，詐騙機率是約 70%。"
+                # 與最新用語一致：不顯示百分比，改用風險等級
+                final_reply = "📊 我記得你上次問到的案件，詐騙風險：高。"
             elif any(keyword in user_input for keyword in ["內容", "回覆", "分析"]):
                 final_reply = f"📋 上次的回覆內容是：\n{last_response[:100]}..."
             elif any(keyword in user_input for keyword in ["摘要", "描述", "提到"]):
@@ -97,12 +98,20 @@ def ask():
         # 5.3 非閒聊/查詢記憶：檢查是否與詐騙相關
         is_related = scam_related_checker.is_related(user_input, history)
         if not is_related:
-            final_reply = "抱歉，您的問題似乎與詐騙無關，我目前專注於詐騙相關問題。"
-            return jsonify({
-                "answer": final_reply,
-                "scam_type": scam_type,
-                "intent": intent
-            })
+            # 與 LINE 一致的保守策略：命中高信號關鍵詞則視為相關
+            high_signal_keywords = [
+                "銀行", "客服", "帳戶", "帳號", "轉帳", "匯款", "ATM", "異常交易", "驗證碼", "OTP",
+                "檢察官", "法院", "拘票", "地檢署", "警察", "逮捕", "不配合", "保密"
+            ]
+            if any(kw in user_input for kw in high_signal_keywords):
+                logger.warning("相關性檢查為 False，但命中高信號關鍵詞，改視為相關並繼續分析。")
+            else:
+                final_reply = "抱歉，您的問題似乎與詐騙無關，我目前專注於詐騙相關問題。"
+                return jsonify({
+                    "answer": final_reply,
+                    "scam_type": scam_type,
+                    "intent": intent
+                })
         
         # 5.4 詐騙相關：呼叫Ollama獲取分析結果
         # 5.4.1 呼叫Ollama生成回答（詐騙分析）
@@ -202,8 +211,12 @@ def health_check():
     from src.data_loader import DataLoader
     from config import config
     
-    # 檢查資料集合是否準備就緒
+    # 檢查資料集合是否準備就緒（需嘗試載入）
     data_loader = DataLoader(config)
+    try:
+        data_loader.load_embeddings()
+    except Exception:
+        pass
     collection_ready = bool(data_loader.get_collection())
     
     return jsonify({
