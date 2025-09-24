@@ -34,4 +34,4 @@ storage/data/chroma_db/
 scam_analysis/
 
 ### Keep ignoring full data folder if previously used
-/storage/data
+
