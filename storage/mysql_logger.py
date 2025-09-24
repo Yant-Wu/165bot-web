@@ -31,12 +31,39 @@ class MySQLLogger:
             return False
 
         try:
+            host = self.db_config["host"]
+            port = int(self.db_config.get("port", 3306))
+            user = self.db_config["user"]
+            password = self.db_config["password"]
+            db_name = self.db_config["db_name"]
+
+            # 先嘗試無資料庫連線，用於自動建立資料庫
+            tmp_conn = pymysql.connect(
+                host=host,
+                port=port,
+                user=user,
+                password=password,
+                charset="utf8mb4",
+                connect_timeout=5
+            )
+            try:
+                with tmp_conn.cursor() as cursor:
+                    cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{db_name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;")
+                tmp_conn.commit()
+                logger.info(f"確保資料庫已存在：{db_name}")
+            finally:
+                try:
+                    tmp_conn.close()
+                except Exception:
+                    pass
+
+            # 連線到目標資料庫
             self.conn = pymysql.connect(
-                host=self.db_config["host"],
-                port=int(self.db_config.get("port", 3306)),
-                user=self.db_config["user"],
-                password=self.db_config["password"],
-                database=self.db_config["db_name"],
+                host=host,
+                port=port,
+                user=user,
+                password=password,
+                database=db_name,
                 charset="utf8mb4",
                 connect_timeout=5
             )
@@ -102,7 +129,11 @@ class MySQLLogger:
         
         # 2. 建立表格（若不存在）
         if not self._create_table():
-            self.conn.close()
+            try:
+                if self.conn:
+                    self.conn.close()
+            except Exception:
+                pass
             return False
         
         try:
@@ -125,6 +156,9 @@ class MySQLLogger:
         
         finally:
             # 4. 無論成敗，關閉連線
-            if self.conn:
-                self.conn.close()
-                logger.info("MySQL連線已關閉")
+            try:
+                if self.conn:
+                    self.conn.close()
+                    logger.info("MySQL連線已關閉")
+            except Exception:
+                pass

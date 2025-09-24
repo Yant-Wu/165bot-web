@@ -59,7 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             longitude: longitude
                         })
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         const formattedAnswer = data.answer.replace(/\n/g, '<br>');
                         const botMessage = document.createElement("div");
@@ -78,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         errorMessage.className = "msg bot";
                         errorMessage.innerHTML = `
                             <div class="avatar"></div>
-                            <div class="bubble">⚠️ 發生錯誤</div>
+                            <div class="bubble">⚠️ 發生錯誤，請稍後再試</div>
                             <div class="timestamp">${getCurrentTime()}</div>
                         `;
                         chatbox.appendChild(errorMessage);
@@ -93,7 +98,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ question: question })
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         const formattedAnswer = data.answer.replace(/\n/g, '<br>');
                         const botMessage = document.createElement("div");
@@ -104,6 +114,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="timestamp">${getCurrentTime()}</div>
                         `;
                         chatbox.appendChild(botMessage);
+                        scrollToBottom();
+                    })
+                    .catch(error => {
+                        console.error("錯誤:", error);
+                        const errorMessage = document.createElement("div");
+                        errorMessage.className = "msg bot";
+                        errorMessage.innerHTML = `
+                            <div class="avatar"></div>
+                            <div class="bubble">⚠️ 發生錯誤，請稍後再試</div>
+                            <div class="timestamp">${getCurrentTime()}</div>
+                        `;
+                        chatbox.appendChild(errorMessage);
                         scrollToBottom();
                     });
                 }

@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Optional, Tuple
+import re
 
 class ReplyFormatter:
     @staticmethod
@@ -33,32 +34,90 @@ class ReplyFormatter:
 
     @staticmethod
     def format_reply(
-        scam_type: str, 
-        answer: str, 
-        scam_prob: str = "約 70%"
+        scam_type: str,
+        answer: str,
+        risk_level: Optional[str] = None
     ) -> str:
         """
-        格式化回覆（加入詐騙類型、機率、查證建議）
+        格式化回覆（加入詐騙類型、風險等級、查證建議）
         
         Args:
             scam_type: 詐騙類型
             answer: 分析內容
-            scam_prob: 詐騙機率（預設70%）
+            risk_level: 詐騙風險等級（高/低，預設高）
         
         Returns:
             str: 格式化後的回覆
         """
+        # 先從原始 answer 中擷取（或推斷）風險等級，並清理重覆區塊
+        derived_level, cleaned = ReplyFormatter._derive_risk_and_clean(answer)
+        final_level = (risk_level or derived_level or "高")
+
         return f"""📌 詐騙類型：{scam_type}
-📊 詐騙機率：{scam_prob}
+📊 詐騙風險：{final_level}
 
 🔍 分析內容：
-{answer}
+{cleaned}
 
 🧠 查證建議：
 1. 請保留相關對話紀錄與付款證明
 2. 請勿再聯繫對方或提供任何帳戶資訊
 3. 若有疑慮請撥打 165 詐騙專線
 """
+
+    @staticmethod
+    def _derive_risk_and_clean(answer: str) -> Tuple[Optional[str], str]:
+        """
+        從原始回答中抽取風險等級（若有），並清理重覆的標題/建議區塊與機率字樣。
+
+        規則：
+        - 先移除行首的「📌 詐騙類型：...」「📊 詐騙機率/風險：...」等標題行
+        - 若偵測到百分比，>=60 → 高，否則低；把原百分比替換成「高/低」或直接移除
+        - 若內文已含「🧠 查證建議」段落，截斷其後內容，避免與統一建議重覆
+        - 若內文已有「詐騙風險：高/低」用詞，也可作為風險來源
+        """
+        if not answer:
+            return None, ""
+
+        s = answer
+
+        # 截斷重複的建議段落
+        suggest_idx = s.find("🧠 查證建議")
+        if suggest_idx != -1:
+            s = s[:suggest_idx].rstrip()
+
+        # 移除內嵌的類型/風險標題行
+        s_lines = []
+        for line in s.splitlines():
+            if re.match(r"^\s*📌\s*詐騙類型\s*：", line):
+                continue
+            if re.match(r"^\s*📊\s*詐騙(機率|風險)\s*：", line):
+                continue
+            s_lines.append(line)
+        s = "\n".join(s_lines).strip()
+
+        # 尋找百分比，推斷高/低
+        risk_level = None
+        m = re.search(r"(\d{1,3})\s*%", answer)
+        if m:
+            try:
+                pct = int(m.group(1))
+                risk_level = "高" if pct >= 60 else "低"
+            except Exception:
+                pass
+
+        # 若未由百分比取得，嘗試從文字判斷
+        if risk_level is None:
+            if re.search(r"(高風險|風險\s*[：:]\s*高)", answer):
+                risk_level = "高"
+            elif re.search(r"(低風險|風險\s*[：:]\s*低)", answer):
+                risk_level = "低"
+
+        # 將殘留的「詐騙機率」字樣正規化為「詐騙風險」，並移除數字
+        s = re.sub(r"詐騙\s*機率", "詐騙風險", s)
+        s = re.sub(r"(詐騙\s*風險\s*[：:]\s*)\d{1,3}\s*%", r"\1" + (risk_level or "高"), s)
+
+        return risk_level, s
 
     @staticmethod
     def get_default_reply(intent: str) -> str:

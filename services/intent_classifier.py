@@ -22,6 +22,12 @@ class IntentClassifier:
             "判斷使用者輸入屬於以下四種意圖之一，只回傳中文意圖名稱，勿加解釋："
             "查詢記憶、描述事件、詢問功能、閒聊。"
         )
+        # 高信號關鍵詞（若命中，視為正在描述案件而非閒聊）
+        self._high_signal_keywords = [
+            "銀行", "客服", "帳戶", "帳號", "轉帳", "匯款", "ATM", "異常交易", "驗證碼", "OTP",
+            "檢察官", "法院", "拘票", "地檢署", "警察", "逮捕", "不配合", "保密",
+            "投資", "群組", "高報酬", "穩賺不賠", "身分證", "查帳"
+        ]
 
     def classify_intent(
         self, 
@@ -62,6 +68,16 @@ class IntentClassifier:
                     if intent == "查詢記憶" and len(user_input) > 40:
                         logger.warning(f"輸入長度{len(user_input)}>40，修正意圖為「描述事件」")
                         return "描述事件"
+
+                    # 特殊修正2：若誤判為「閒聊」但文字較長或命中高信號關鍵詞，改為「描述事件」
+                    if intent == "閒聊":
+                        long_text = len(user_input) >= 30
+                        hit_signal = any(kw in user_input for kw in self._high_signal_keywords)
+                        if long_text or hit_signal:
+                            logger.warning(
+                                f"LLM 判為閒聊，但長文本({len(user_input)}字)或命中高信號({hit_signal})，修正為「描述事件」"
+                            )
+                            return "描述事件"
                     
                     return intent
             
