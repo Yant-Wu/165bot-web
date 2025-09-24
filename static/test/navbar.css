@@ -1,0 +1,110 @@
+/* ========== 主要樣式 ========== */
+.navbar {
+  background-color: #fff;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #333;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.navbar-current-page {
+  font-size: 1.2em;
+  display: none;
+  color: #333;
+}
+
+/* ========== 漢堡菜單 ========== */
+.navbar-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.navbar-toggle span {
+  background-color: #333;
+  height: 3px;
+  width: 100%;
+  border-radius: 2px;
+}
+
+/* ========== 導航連結樣式 ========== */
+.navbar-links {
+  display: flex;
+  gap: 15px;
+}
+
+.navbar-links a {
+  text-decoration: none;
+  font-size: 1.1em;
+  color: #333;
+  transition: color 0.3s ease;
+}
+
+.navbar-links a:hover {
+  color: #2c5f2d;
+}
+
+.navbar-links a.active {
+  color: #2c5f2d;
+  border-bottom: none;
+}
+
+/* ========== 響應式設計 ========== */
+@media (max-width: 768px) {
+  .navbar {
+      padding: 8px 15px;
+  }
+
+  .navbar-brand {
+      display: none;
+  }
+
+  .navbar-current-page {
+      display: block;
+      font-size: 1.2em;
+  }
+
+  .navbar-toggle {
+      display: flex;
+  }
+
+  .navbar-links {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: white;
+      flex-direction: column;
+      padding: 10px 0;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+  }
+
+  .navbar-links.active {
+      display: flex;
+  }
+
+  .navbar-links a {
+      padding: 10px 20px;
+      text-align: center;
+  }
+}
+
+/* 響應式設計 - 手機（480px以下） */
+@media (max-width: 480px) {
+  .navbar-current-page {
+      font-size: 1em;
+  }
+}

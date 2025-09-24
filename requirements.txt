@@ -1,0 +1,27 @@
+# 核心Web框架
+flask>=2.3.3
+flask-cors>=4.0.0
+
+# Line Bot SDK
+line-bot-sdk>=3.0.0
+
+# AI/ML 相關
+ollama>=0.3.0
+chromadb>=0.5.0
+
+# 資料處理與格式
+pyyaml>=6.0.1          # 處理YAML配置文件
+python-dotenv>=1.0.0   # 加載.env環境變量
+pymysql>=1.1.0         # MySQL資料庫連接
+
+# 網路請求
+requests>=2.31.0       # 發送HTTP請求（調用Ollama API、地理反查等）
+certifi>=2024.07.04    # 提供 CA 憑證（解決對 LINE API 的 SSL 驗證）
+
+# 類型提示（增強程式碼可讀性）
+typing-extensions>=4.8.0
+
+# 額外工具（根據需要安裝）
+uvicorn>=0.25.0        # 可選，用於生產環境部署
+gunicorn>=21.2.0       # 可選，WSGI服務器
+    

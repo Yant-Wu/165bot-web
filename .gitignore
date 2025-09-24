@@ -1,0 +1,37 @@
+### OS / Editor ###
+.DS_Store
+.idea/
+.vscode/
+
+### Environments ###
+.env
+venv/
+
+### Python caches ###
+__pycache__/
+*.py[cod]
+*.pyo
+
+### Project generated artifacts ###
+# Logs
+*.log
+
+# Runtime CSV/JSON
+scam_logs.csv
+storage/scam_logs.csv
+location_stats.json
+storage/location_stats.json
+memory.json
+storage/memory.json
+
+# Embeddings & Vector DB
+storage/data/embeddings.pkl
+storage/data/embeddings_2.pkl
+storage/data/chroma_db/
+*.sqlite3
+
+# Old folder used during runs (if any)
+scam_analysis/
+
+### Keep ignoring full data folder if previously used
+/storage/data

@@ -1,0 +1,494 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Noto Sans TC', Arial, sans-serif;
+}
+
+/* 修改位置 4：複製 home.html 的導覽列樣式 */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo img {
+  height: 50px;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+}
+
+.nav-links li {
+  margin: 0 20px;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #ff6347;
+}
+
+.nav-links a.active {
+  color: #ff6347; /* 當前頁面高亮 */
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  background: #ff6347;
+  bottom: -5px;
+  left: 0;
+  transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+}
+
+.nav-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.nav-buttons a {
+  margin-left: 15px;
+  padding: 10px 25px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  text-decoration: none;
+  display: inline-block;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.chat-btn {
+  background-color: #ff6347;
+  color: white;
+}
+
+.linebot-btn {
+  background-color: transparent;
+  border: 2px solid #ff6347;
+  color: #ff6347;
+}
+
+.nav-buttons a:hover {
+  transform: scale(1.1);
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.hamburger span {
+  width: 25px;
+  height: 3px;
+  background: white;
+  margin: 2px 0;
+  transition: all 0.3s ease;
+}
+
+.hamburger.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* 修改位置 5：新增 chat-card 樣式，模仿 home.html 的卡片效果 */
+.container {
+  padding: 70px 20px;
+}
+
+.chat-card {
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #1a1a1a;
+  color: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  height: 70vh; /* 設置固定高度，適應聊天視窗 */
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 15px 15px 0 0;
+  width: 100%;
+  box-sizing: border-box;
+  color: #fff;
+}
+
+.chat-header-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: url('../photos/robot.png') no-repeat center;
+  background-size: cover;
+  margin-right: 1rem;
+}
+
+.chat-header-info {
+  flex: 1;
+}
+
+.chat-header-name {
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.chat-header-desc {
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.chat-header-icon {
+  display: none;
+}
+
+.chatbox {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.msg {
+  display: flex;
+  max-width: 70%;
+  margin-bottom: 0.5rem;
+}
+
+.msg.bot {
+  align-self: flex-start;
+  flex-direction: row;
+  gap: 0.5rem;
+}
+
+.msg.user {
+  align-self: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.msg .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: url('../photos/robot.png') no-repeat center;
+  background-size: cover;
+  flex-shrink: 0;
+}
+
+.msg .bubble {
+  padding: 1rem;
+  border-radius: 15px;
+  font-size: 1rem;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.msg .bubble br {
+  margin-bottom: 0.5rem;
+  display: block;
+  content: "";
+}
+
+.msg.bot .bubble {
+  background-color: #fff;
+  color: #333;
+  border-bottom-left-radius: 5px;
+}
+
+.msg.user .bubble {
+  background-color: #00c300;
+  color: #fff;
+  border-bottom-right-radius: 5px;
+}
+
+.msg .timestamp {
+  font-size: 0.7rem;
+  color: #ccc;
+  margin-top: 0.4rem;
+}
+
+.msg.user .read-receipt {
+  font-size: 0.7rem;
+  color: #ccc;
+  margin-top: 0.4rem;
+}
+
+.msg.bot + .msg.bot,
+.msg.user + .msg.user {
+  margin-top: -1rem;
+}
+
+.msg.bot + .msg.user,
+.msg.user + .msg.bot {
+  margin-top: 0;
+}
+
+.input-area {
+  display: flex;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 0 0 15px 15px;
+}
+
+.input-area input {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 25px 0 0 25px;
+  font-size: 1rem;
+  outline: none;
+  background-color: #fff;
+  color: #333;
+}
+
+/* 修改位置 6：複製 home.html 的按鈕樣式 */
+.chat-now-btn {
+  padding: 12px 40px;
+  border: none;
+  border-radius: 0 25px 25px 0;
+  cursor: pointer;
+  font-size: 1.2rem;
+  background-color: #ff6347;
+  color: white;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chat-now-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 修改位置 7：手機端 RWD 樣式，加入漢堡選單 */
+@media (max-width: 768px) {
+  /* 導覽列 RWD 調整 */
+  .navbar {
+      flex-direction: row;
+      padding: 15px 20px;
+      position: relative;
+  }
+
+  .navbar-left {
+      flex-direction: row;
+      align-items: center;
+      width: 100%;
+      justify-content: space-between;
+  }
+
+  .nav-links {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: #1a1a1a;
+      padding: 20px;
+      z-index: 1000;
+  }
+
+  .nav-links.active {
+      display: flex;
+  }
+
+  .nav-links li {
+      margin: 10px 0;
+  }
+
+  .hamburger {
+      display: flex;
+  }
+
+  .nav-buttons {
+      display: none;
+  }
+
+  .nav-links.active + .nav-buttons {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      position: absolute;
+      top: calc(100% + 150px);
+      left: 0;
+      background-color: #1a1a1a;
+      padding: 20px;
+      z-index: 1000;
+  }
+
+  .nav-buttons a {
+      margin-left: 0;
+      margin-bottom: 10px;
+      width: 100%;
+      text-align: center;
+  }
+
+  /* 聊天區域 RWD 調整 */
+  .container {
+      padding: 40px 15px;
+  }
+
+  .chat-card {
+      height: 80vh; /* 手機端增加高度 */
+  }
+
+  .chat-header {
+      padding: 0.5rem;
+  }
+
+  .chat-header-avatar {
+      width: 40px;
+      height: 40px;
+  }
+
+  .chat-header-name {
+      font-size: 1rem;
+  }
+
+  .chat-header-desc {
+      font-size: 0.8rem;
+  }
+
+  .chatbox {
+      padding: 0.5rem;
+      gap: 1rem;
+  }
+
+  .msg {
+      max-width: 80%;
+  }
+
+  .msg .bubble {
+      font-size: 0.9rem;
+      padding: 0.75rem;
+      line-height: 1.5;
+  }
+
+  .msg .bubble br {
+      margin-bottom: 0.4rem;
+  }
+
+  .msg .avatar {
+      width: 35px;
+      height: 35px;
+  }
+
+  .msg .timestamp,
+  .msg.user .read-receipt {
+      margin-top: 0.3rem;
+  }
+
+  .input-area {
+      padding: 0.5rem;
+  }
+
+  .input-area input {
+      font-size: 0.9rem;
+  }
+
+  .chat-now-btn {
+      padding: 10px 30px;
+      font-size: 1rem;
+  }
+}
+
+/* 手機端（480px以下） */
+@media (max-width: 480px) {
+  .chat-header {
+      padding: 0.3rem;
+  }
+
+  .chat-header-avatar {
+      width: 30px;
+      height: 30px;
+  }
+
+  .chat-header-name {
+      font-size: 0.9rem;
+  }
+
+  .chat-header-desc {
+      font-size: 0.7rem;
+  }
+
+  .chatbox {
+      padding: 0.3rem;
+      gap: 0.8rem;
+  }
+
+  .msg {
+      max-width: 85%;
+  }
+
+  .msg .bubble {
+      font-size: 0.8rem;
+      padding: 0.6rem;
+      line-height: 1.4;
+  }
+
+  .msg .bubble br {
+      margin-bottom: 0.3rem;
+  }
+
+  .msg .avatar {
+      width: 30px;
+      height: 30px;
+  }
+
+  .msg .timestamp,
+  .msg.user .read-receipt {
+      margin-top: 0.2rem;
+  }
+
+  .input-area {
+      padding: 0.3rem;
+  }
+
+  .input-area input {
+      font-size: 0.8rem;
+  }
+
+  .chat-now-btn {
+      padding: 8px 20px;
+      font-size: 0.9rem;
+  }
+}

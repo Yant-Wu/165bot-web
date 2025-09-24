@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat165 官網問答系統</title>
+    <link rel="icon" href="/static/photos/logo.jpg" type="image/x-icon" />
+    <link rel="stylesheet" href="/static/css/home.css">
+</head>
+<body>
+    <!-- 導覽列 -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <div class="logo">
+                <img src="/static/photos/robot.png" alt="Logo" />
+            </div>
+            <ul class="nav-links">
+                <li><a href="/home">首頁</a></li>
+                <li><a href="/chat">Chat165 機器人</a></li>
+                <li><a href="/dashboard">防詐儀表板</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-buttons">
+            <a href="https://line.me/R/ti/p/@950pwvlr" class="linebot-btn">Linebot連結</a>
+        </div>
+
+        <!-- 修改位置 2：新增漢堡選單圖標 -->
+        <div class="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+    
+    </nav>
+
+    <!-- 介紹區域 -->
+    <section class="intro">
+        <!-- 修改位置 1：將內容包裝在卡片容器中 -->
+        <div class="intro-card">
+            <h1>開始與 Chat165 機器人對話！</h1>
+            <p>立即開聊天，保護你的財產安全！</p>
+            <!-- 修改位置 2：移除多餘按鈕，只保留一個 Chat Now -->
+
+            <div class="intro-buttons">
+                <a href="/chat" class="chat-now-btn">Chat Now</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 卡片輪播 -->
+    <section class="carousel">
+        <div class="card">
+            <img src="/static/photos/card/165scam-0.jpg" alt="Card 1" />
+        </div>
+        <div class="card">
+            <img src="/static/photos/card/20230920-102541_U21510_M889765_987e.jpg" alt="Card 2" />
+        </div>
+        <div class="card">
+            <img src="/static/photos/card/bb556c00-4003-4c87-9196-b75b486b3ab2@1024x768.jpg" alt="Card 3" />
+        </div>
+        <div class="card">
+            <img src="/static/photos/card/c621fe10861641718bb19eec34bbbdef.jpg" alt="Card 4" />
+        </div>
+        <div class="card">
+            <img src="/static/photos/card/d2572939.jpg" alt="Card 5" />
+        </div>
+        <div class="card">
+            <img src="/static/photos/card/images (1).jpeg" alt="Card 6" />
+        </div>
+        <div class="card">
+            <img src="/static/photos/card/images.jpeg" alt="Card 7" />
+        </div>
+        
+    </section>
+
+    <!-- 即時互動區塊 -->
+    <section class="interaction">
+        <div class="interaction-container">
+            <div class="interaction-image">
+                <div class="interaction-content-display">
+                    <img src="/static/photos/robot.png" alt="Interaction Robot" class="content-image active" data-content="simple-answer" />
+                    <img src="/static/photos/robot.png" alt="Risk Assessment" class="content-image" data-content="risk-assessment" />
+                    <img src="/static/photos/robot.png" alt="Risk Evaluation" class="content-image" data-content="risk-evaluation" />
+                </div>
+            </div>
+            <div class="interaction-content">
+                <h2>即時互動</h2>
+                <p>與 Chat165 機器人對話即時聊天：</p>
+                <ul class="interaction-list">
+                    <li data-target="simple-answer" class="active">簡單解答 解答針對簡單的疑問。</li>
+                    <li data-target="risk-assessment">風險評估 快速評估潛在的詐騙風險。</li>
+                    <li data-target="risk-evaluation">風險評估 快速評估潛在的詐騙風險。</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <script src="/static/js/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat165 機器人 - 詐騙問答系統</title>
+    <link rel="icon" href="/static/photos/logo.jpg" type="image/x-icon" />
+
+    <!-- 引入 Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap">
+    <!-- 引入 CSS 檔案 -->
+    <link rel="stylesheet" href="/static/css/chat.css">
+</head>
+<body>
+    <!-- 修改位置 1：使用 home.html 的導覽列 -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <div class="logo">
+                <img src="/static/photos/robot.png" alt="Logo" />
+            </div>
+            <ul class="nav-links">
+                <li><a href="/home">首頁</a></li>
+                <li><a href="/chat" class="active">Chat165 機器人</a></li>
+                <li><a href="/dashboard">防詐儀表板</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+    </nav>
+
+    <!-- 修改位置 2：將聊天區域包裝在卡片容器中 -->
+    <div class="container">
+        <div class="chat-card">
+            <div class="chat-header">
+                <div class="chat-header-avatar"></div>
+                <div class="chat-header-info">
+                    <div class="chat-header-name">詐騙問答助手</div>
+                    <div class="chat-header-desc">這是一個協助判斷詐騙風險的聊天機器人</div>
+                </div>
+                <div class="chat-header-icon" title="這是一個聊天機器人"><i>ℹ️</i></div>
+            </div>
+            <div class="chatbox" id="chatbox"></div>
+            <div class="input-area">
+                <input type="text" id="questionInput" placeholder="請輸入你的問題..." />
+                <!-- 修改位置 3：將送出按鈕改為 home.html 的按鈕樣式 -->
+                <button class="chat-now-btn" onclick="sendQuestion()">送出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- <script src="/static/js/location.js"></script> -->
+    <script src="/static/js/chat.js"></script>
+</body>
+</html>

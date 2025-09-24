@@ -1,0 +1,607 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+/* 導覽列樣式 */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo img {
+  height: 50px;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+}
+
+.nav-links li {
+  margin: 0 20px;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #ff6347;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  background: #ff6347;
+  bottom: -5px;
+  left: 0;
+  transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+}
+
+.nav-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.nav-buttons a {
+  margin-left: 15px;
+  padding: 10px 25px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  text-decoration: none;
+  display: inline-block;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.chat-btn {
+  background-color: #ff6347;
+  color: white;
+}
+
+.linebot-btn {
+  background-color: transparent;
+  border: 2px solid #ff6347;
+  color: #ff6347;
+}
+
+.nav-buttons a:hover {
+  transform: scale(1.1);
+}
+
+/* 修改位置 3：新增漢堡選單樣式 */
+.hamburger {
+  display: none; /* 桌面端隱藏 */
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.hamburger span {
+  width: 25px;
+  height: 3px;
+  background: white;
+  margin: 2px 0;
+  transition: all 0.3s ease;
+}
+
+/* 當漢堡選單被點擊時，變成 X 形狀 */
+.hamburger.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* 介紹區域樣式 */
+.intro {
+  padding: 70px 20px;
+}
+
+.intro-card {
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #1a1a1a;
+  color: white;
+  padding: 40px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.intro h1 {
+  font-size: 3.5rem;
+  margin-bottom: 25px;
+  color: white;
+}
+
+.intro p {
+  font-size: 1.5rem;
+  margin-bottom: 40px;
+  color: #ccc;
+}
+
+.intro-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+}
+
+.chat-now-btn, .linebot-btn {
+  padding: 12px 40px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chat-now-btn {
+  background-color: #ff6347;
+  color: white;
+}
+
+.linebot-btn {
+  background-color: transparent;
+  border: 2px solid #ff6347;
+  color: #ff6347;
+}
+
+.chat-now-btn:hover, .linebot-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 卡片輪播樣式 */
+.carousel {
+  display: flex;
+  overflow: hidden;
+  padding: 45px;
+}
+
+.card {
+  min-width: 500px;
+  height: 300px;
+  margin-right: 30px;
+  position: relative;
+  border-radius: 15px;
+  overflow: hidden;
+  animation: slide 15s infinite linear;
+}
+
+.card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card .overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 0, 0, 0.7);
+  color: white;
+  font-size: 2rem;
+  padding: 10px 20px;
+  border-radius: 50%;
+  text-align: center;
+}
+
+/* 卡片輪播動畫 */
+@keyframes slide {
+  0% {
+      transform: translateX(0);
+  }
+  100% {
+      transform: translateX(-100%);
+  }
+}
+
+/* 即時互動區塊樣式 */
+.interaction {
+  padding: 70px 20px;
+  background-color: #f9f9f9;
+}
+
+.interaction-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 40px;
+}
+
+.interaction-image {
+  position: relative;
+}
+
+.interaction-content-display {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  height: 300px;
+}
+
+.content-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.content-image.active {
+  opacity: 1;
+}
+
+.interaction-content {
+  max-width: 500px;
+}
+
+.interaction-content h2 {
+  font-size: 3.5rem;
+  margin-bottom: 25px;
+}
+
+.interaction-content p {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #666;
+}
+
+.interaction-list {
+  list-style: none;
+}
+
+.interaction-list li {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: #666;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.interaction-list li:hover {
+  background-color: #ff6347;
+  color: white;
+}
+
+.interaction-list li.active {
+  background-color: #ff6347;
+  color: white;
+}
+
+/* 開始對話區塊樣式 */
+.start-chat {
+  padding: 50px 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 15px;
+  margin: 0 20px 50px;
+}
+
+.start-chat-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.start-chat h2 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.start-chat p {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.start-chat .chat-now-btn {
+  padding: 12px 40px;
+  font-size: 1.2rem;
+}
+
+/* 查詐評騙權威投稿區塊樣式 */
+.authority-posts {
+  padding: 70px 20px;
+}
+
+.authority-posts-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.authority-posts h2 {
+  font-size: 3.5rem;
+  margin-bottom: 25px;
+}
+
+.authority-posts p {
+  font-size: 1.5rem;
+  margin-bottom: 40px;
+  color: #666;
+}
+
+.main-action-btn {
+  padding: 12px 40px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  background-color: #ff6347;
+  color: white;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.main-action-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.post-item {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  border-radius: 15px;
+  background-color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.post-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.post-item:nth-child(1),
+.post-item:nth-child(3) {
+  background-color: #ffe5d9;
+}
+
+.post-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ff6347;
+  margin-right: 20px;
+}
+
+.post-content h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.post-content p {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+/* 修改位置 4：手機端 RWD 樣式，加入漢堡選單 */
+@media (max-width: 768px) {
+  /* 導覽列 RWD 調整 */
+  .navbar {
+      flex-direction: row; /* 保持水平排列，但調整內部元素 */
+      padding: 15px 20px;
+      position: relative;
+  }
+
+  .navbar-left {
+      flex-direction: row;
+      align-items: center;
+      width: 100%;
+      justify-content: space-between; /* logo 和漢堡圖標分開 */
+  }
+
+  .nav-links {
+      display: none; /* 預設隱藏 */
+      flex-direction: column;
+      width: 100%;
+      position: absolute;
+      top: 100%; /* 顯示在導覽列下方 */
+      left: 0;
+      background-color: #1a1a1a;
+      padding: 20px;
+      z-index: 1000;
+  }
+
+  .nav-links.active {
+      display: flex; /* 當添加 active 類時顯示 */
+  }
+
+  .nav-links li {
+      margin: 10px 0;
+  }
+
+  .hamburger {
+      display: flex; /* 手機端顯示漢堡圖標 */
+  }
+
+  .nav-buttons {
+      display: none; /* 手機端隱藏按鈕，移到選單內 */
+  }
+
+  /* 將 nav-buttons 按鈕移到選單內 */
+  .nav-links.active + .nav-buttons {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      position: absolute;
+      top: calc(100% + 200px); /* 根據選單高度調整 */
+      left: 0;
+      background-color: #1a1a1a;
+      padding: 20px;
+      z-index: 1000;
+  }
+
+  .nav-buttons a {
+      margin-left: 0;
+      margin-bottom: 10px;
+      width: 100%;
+      text-align: center;
+  }
+
+  /* 介紹區域 RWD 調整 */
+  .intro {
+      padding: 40px 15px;
+  }
+
+  .intro-card {
+      padding: 20px;
+  }
+
+  .intro h1 {
+      font-size: 2rem;
+  }
+
+  .intro p {
+      font-size: 1rem;
+  }
+
+  .chat-now-btn, .linebot-btn {
+      padding: 10px 30px;
+      font-size: 1rem;
+  }
+
+  /* 卡片輪播 RWD 調整 */
+  .carousel {
+      padding: 20px;
+  }
+
+  .card {
+      min-width: 200px;
+      height: 240px;
+      margin-right: 15px;
+  }
+
+  .card .overlay {
+      font-size: 1.5rem;
+      padding: 8px 16px;
+  }
+
+  /* 即時互動區塊 RWD 調整 */
+  .interaction {
+      padding: 40px 15px;
+  }
+
+  .interaction-container {
+      flex-direction: column;
+      gap: 20px;
+  }
+
+  .interaction-content-display {
+      max-width: 300px;
+      height: 200px;
+  }
+
+  .interaction-content h2 {
+      font-size: 2rem;
+  }
+
+  .interaction-content p {
+      font-size: 1rem;
+  }
+
+  .interaction-list li {
+      font-size: 1rem;
+      padding: 8px;
+  }
+
+  /* 開始對話區塊 RWD 調整 */
+  .start-chat {
+      padding: 30px 15px;
+      margin: 0 15px 30px;
+  }
+
+  .start-chat-container {
+      flex-direction: column;
+      text-align: center;
+      gap: 20px;
+  }
+
+  .start-chat h2 {
+      font-size: 1.8rem;
+  }
+
+  .start-chat p {
+      font-size: 1rem;
+  }
+
+  .start-chat .chat-now-btn {
+      padding: 10px 30px;
+      font-size: 1rem;
+  }
+
+  /* 查詐評騙權威投稿區塊 RWD 調整 */
+  .authority-posts {
+      padding: 40px 15px;
+  }
+
+  .authority-posts h2 {
+      font-size: 2rem;
+  }
+
+  .authority-posts p {
+      font-size: 1rem;
+  }
+
+  .main-action-btn {
+      padding: 10px 30px;
+      font-size: 1rem;
+  }
+
+  .post-item {
+      padding: 15px;
+  }
+
+  .post-number {
+      font-size: 1.5rem;
+      margin-right: 15px;
+  }
+
+  .post-content h3 {
+      font-size: 1.2rem;
+  }
+
+  .post-content p {
+      font-size: 1rem;
+  }
+}

@@ -1,0 +1,1071 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Noto Sans TC', Arial, sans-serif;
+}
+
+/* 導覽列樣式 */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo img {
+  height: 50px;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+}
+
+.nav-links li {
+  margin: 0 20px;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #ff6347;
+}
+
+.nav-links a.active {
+  color: #ff6347;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  background: #ff6347;
+  bottom: -5px;
+  left: 0;
+  transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+}
+
+.nav-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.nav-buttons a {
+  margin-left: 15px;
+  padding: 10px 25px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  text-decoration: none;
+  display: inline-block;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.chat-btn {
+  background-color: #ff6347;
+  color: white;
+}
+
+.linebot-btn {
+  background-color: transparent;
+  border: 2px solid #ff6347;
+  color: #ff6347;
+}
+
+.nav-buttons a:hover {
+  transform: scale(1.1);
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.hamburger span {
+  width: 25px;
+  height: 3px;
+  background: white;
+  margin: 2px 0;
+  transition: all 0.3s ease;
+}
+
+.hamburger.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* 卡片效果 */
+.dashboard-frame {
+  padding: 20px 0;
+}
+
+.dashboard-content {
+  width: 100%;
+  margin: 0 0px;
+  background-color: #fff;
+  color: #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-title {
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin: 0.5rem auto;
+}
+
+.section-title-footer  {
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+  margin: 1rem;
+}
+
+/* 地圖區域 */
+.data-summary-card {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1rem;
+  max-width: 100%;
+  padding: 0;
+  background: transparent;
+}
+
+/* 桌面端地圖尺寸 */
+.data-summary-card .map-wrapper {
+  width: 50%;
+  max-width: none;
+  height: 750px; /* 修改：從 500px 放大 1.5 倍到 750px */
+  border-radius: 0;
+  background-color: #fff;
+  box-shadow: none;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 750px; /* 修改：從 500px 放大 1.5 倍到 750px */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#taiwan-map {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #fff;
+}
+
+.map-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  pointer-events: none;
+  display: none;
+  font-size: 0.9rem;
+  transition: opacity 0.3s ease;
+}
+
+.county {
+  fill: rgba(200, 200, 0, 0.5);
+  stroke: #666;
+  stroke-width: 1;
+  transition: fill 0.3s ease;
+}
+
+.county:hover {
+  fill: rgba(150, 150, 150, 0.8);
+}
+
+.county.hover {
+  fill: rgba(150, 150, 150, 0.8);
+}
+
+.county.active {
+  fill: #f7c948;
+}
+
+.label {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  pointer-events: auto;
+  text-anchor: middle;
+  font-weight: 500;
+  font-size: 1.2rem; /* 修改：從 0.8rem 放大 1.5 倍到 1.2rem */
+  stroke: none;
+  fill: #333;
+  text-shadow: none;
+}
+
+.label.hover {
+  cursor: pointer;
+  stroke: #d78c3c;
+  stroke-width: 0.08rem;
+  font-size: 1.2rem; /* 修改：同步調整 */
+}
+
+.label.active {
+  stroke: #d78c3c;
+  stroke-width: 0.08rem;
+  font-size: 1.2rem; /* 修改：同步調整 */
+}
+
+/* 表格區域 */
+.fraud-table-wrapper {
+  width: 50%;
+  max-width: none;
+  height: 800px; /* 修改：從 500px 放大 1.5 倍到 750px，與地圖高度一致 */
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+}
+
+.fraud-table-wrapper h2 {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0.5rem 0;
+}
+
+.double-column-table {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  justify-content: space-between;
+}
+
+.table-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.fraud-table {
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+.fraud-table thead {
+  background: #fff;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+}
+
+.fraud-table th,
+.fraud-table td {
+  padding: 0.3rem 0.5rem;
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.fraud-table td {
+  padding: 0.3rem 0.5rem;
+  font-size: 1.2rem;
+  text-align: center;
+  border: none;
+  color: #333;
+  font-weight: 400;
+}
+
+.fraud-table .loss {
+  color: #c0392b;
+  font-weight: bold;
+}
+
+.fraud-table tbody tr {
+  background: #fff;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.fraud-table tr:last-child td {
+  border-bottom: none;
+}
+
+.fraud-table .county-name {
+  font-weight: 500;
+  text-align: left;
+  position: relative;
+  padding-left: 1.5rem;
+  color: #333;
+}
+
+.left-color {
+  position: absolute;
+  left: 0;
+  top: 0.2rem;
+  bottom: 0.2rem;
+  width: 6px;
+  border-radius: 0;
+}
+
+.mobile-header-table {
+  display: none;
+}
+
+.hide-on-mobile {
+  display: table-header-group;
+}
+
+tr.level-high .left-color {
+  background-color: #e74c3c;
+}
+
+tr.level-mid .left-color {
+  background-color: #f1c40f;
+}
+
+tr.level-low .left-color {
+  background-color: #2ecc71;
+}
+
+/* 數據統計 */
+.data-table {
+  flex: 2;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  min-height: 250px;
+  max-width: 100%;
+  margin: 1rem 0;
+}
+
+.data-table table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #333;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.6rem;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+
+.data-table th {
+  background-color: #3498db;
+  color: white;
+  position: sticky;
+  top: 0;
+  cursor: pointer;
+}
+
+.data-table th.ascending::after {
+  content: " ↑";
+}
+
+.data-table th:not(.ascending)::after {
+  content: " ↓";
+}
+
+.data-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.data-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.data-table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 詐騙手法前 5 名專用樣式 */
+.data-table.fraud-methods {
+  margin-top: 0.5rem;
+  padding: 1rem;
+}
+
+.data-table.fraud-methods h5 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: left;
+  margin-bottom: 0.75rem;
+  color: #333;
+}
+
+.data-table.fraud-methods table {
+  border-collapse: separate;
+  border-spacing: 0 0.4rem;
+}
+
+.data-table.fraud-methods th {
+  display: none;
+}
+
+.data-table.fraud-methods tr {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.data-table.fraud-methods tr:hover {
+  background-color: #f5f5f5;
+  cursor: pointer;
+}
+
+.data-table.fraud-methods tr.highlight {
+  background-color: #1a7a6e;
+  color: #fff;
+}
+
+.data-table.fraud-methods tr.highlight:hover {
+  background-color: #15665b;
+}
+
+.data-table.fraud-methods td {
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  vertical-align: middle;
+  border-bottom: none;
+}
+
+.data-table.fraud-methods td:first-child {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1a7a6e;
+  width: 10%;
+  text-align: center;
+}
+
+.data-table.fraud-methods tr.highlight td:first-child {
+  color: #fff;
+}
+
+.data-table.fraud-methods td:nth-child(2) {
+  font-weight: 500;
+  text-align: left;
+  width: 60%;
+}
+
+.case-count {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-left: 0.5rem;
+}
+
+.data-table.fraud-methods td:nth-child(3) {
+  text-align: right;
+  width: 30%;
+  font-weight: 700;
+  font-size: 1.1rem;
+  position: relative;
+}
+
+.unit {
+  font-size: 0.8rem;
+  font-weight: 400;
+  margin-left: 0.2rem;
+}
+
+.arrow {
+  margin-left: 0.5rem;
+  font-size: 1.1rem;
+  color: #1a7a6e;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.data-table.fraud-methods tr.highlight .arrow {
+  color: #fff;
+}
+
+.data-table.fraud-methods tr:hover .arrow {
+  font-size: 0;
+  width: 20px;
+  height: 20px;
+  background-color: #1a7a6e;
+  border-radius: 50%;
+  position: relative;
+}
+
+.data-table.fraud-methods tr:hover .arrow::before {
+  content: ">";
+  font-size: 0.9rem;
+  color: #fff;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.data-table.fraud-methods tr.highlight:hover .arrow {
+  background-color: #fff;
+}
+
+.data-table.fraud-methods tr.highlight:hover .arrow::before {
+  color: #1a7a6e;
+}
+
+/* Top 5 詐騙手法 */
+.top5-section {
+  max-width: 100%;
+  margin: 1rem 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.top5-grid.enhanced {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.top5-card {
+  display: flex;
+  align-items: center;
+  background: #333;
+  border-radius: 999px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  gap: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 1rem;
+}
+
+.top5-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.top5-card.first {
+  grid-column: span 2;
+  justify-content: center;
+  background: #ff6347;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.rank {
+  font-size: 3rem;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+
+.type {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: white;
+}
+
+.details {
+  font-size: 1.4rem;
+  color: white;
+}
+
+
+
+.details strong {
+  color: white;
+}
+
+.top5-note {
+  font-size: 0.8rem;
+  color: #ccc;
+  background-color: #333;
+  padding: 0.75rem;
+  text-align: center;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+}
+
+/* 頁腳 */
+.related-info {
+  max-width: 100%;
+  margin: 1.5rem 20px;
+  padding: 50px;
+  background-color: #222;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.related-info h4 {
+  font-size: 1.4rem;
+  margin-bottom: 15px;
+  color: white;
+  text-align: center;
+}
+
+.footer-container {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.footer-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #ccc;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+}
+
+.footer-link:hover {
+  transform: translateY(-5px);
+}
+
+.circular--squareP {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 0.4rem;
+}
+
+.footer-link p {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+/* 按鈕樣式 */
+.chat-now-btn {
+  padding: 10px 35px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  background-color: #ff6347;
+  color: white;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chat-now-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 手機端 RWD 樣式 */
+@media (max-width: 768px) {
+  /* 導覽列 RWD 調整 */
+  .navbar {
+      flex-direction: row;
+      padding: 10px 20px;
+      position: relative;
+  }
+
+  .navbar-left {
+      flex-direction: row;
+      align-items: center;
+      width: 100%;
+      justify-content: space-between;
+  }
+
+  .nav-links {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: #1a1a1a;
+      padding: 15px;
+      z-index: 1000;
+  }
+
+  .nav-links.active {
+      display: flex;
+  }
+
+  .nav-links li {
+      margin: 8px 0;
+  }
+
+  .hamburger {
+      display: flex;
+  }
+
+  .nav-buttons {
+      display: none;
+  }
+
+  .nav-links.active + .nav-buttons {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      position: absolute;
+      top: calc(100% + 120px);
+      left: 0;
+      background-color: #1a1a1a;
+      padding: 15px;
+      z-index: 1000;
+  }
+
+  .nav-buttons a {
+      margin-left: 0;
+      margin-bottom: 8px;
+      width: 100%;
+      text-align: center;
+      padding: 8px 20px;
+      font-size: 1rem;
+  }
+
+  /* 儀表板內容 RWD 調整 */
+  .dashboard-frame {
+      padding: 15px 0;
+  }
+
+  .dashboard-content {
+      margin: 0 0px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 6px;
+  }
+
+  .section-title {
+      font-size: 2.5rem;
+      margin: 0.5rem auto 0.3rem;
+      color: #333;
+  }
+
+  .data-summary-card {
+      flex-direction: column;
+      gap: 10px;
+      padding: 0;
+  }
+
+  /* 手機端地圖尺寸 */
+  .data-summary-card .map-wrapper {
+      width: 100%;
+      max-width: 100%;
+      height: 0;
+      padding-bottom: 75%;
+      position: relative;
+      min-height: 400px; /* 手機端保持最小高度 */
+      border-radius: 0;
+  }
+
+  .map-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+  }
+
+  /* 當點擊地圖時隱藏詐騙受理數 */
+  .data-summary-card.map-active .fraud-table-wrapper {
+      display: none;
+  }
+
+  /* 調整數據統計 */
+  .data-table {
+      overflow-y: visible;
+      min-height: auto;
+      padding: 0.5rem;
+      max-width: 100%;
+      margin: 0.5rem 0;
+  }
+
+  .data-table table {
+      width: 100%;
+  }
+
+  .data-table th,
+  .data-table td {
+      padding: 0.4rem;
+      font-size: 0.85rem;
+  }
+
+  .fraud-table-wrapper {
+      min-width: 100%;
+      max-width: 100%;
+      height: auto; /* 修改：手機端高度設為 auto，適應內容 */
+      overflow-y: visible;
+      background: transparent;
+      box-shadow: none;
+      padding: 0;
+  }
+
+  .fraud-table-wrapper h2 {
+      font-size: 1.2rem;
+      color: #333;
+      margin-bottom: 0.5rem;
+  }
+
+  .fraud-table td {
+      color: #000000;
+      padding: 0.4rem 0.6rem;
+      font-size: 1.2rem;
+  }
+
+  .mobile-header-table {
+      display: table;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-bottom: 0.4rem;
+  }
+
+  .mobile-header-table th {
+      background: #fff;
+      color: #333;
+      font-weight: 600;
+      padding: 0.5rem 0.8rem;
+      font-size: 1rem;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+  }
+
+  .hide-on-mobile {
+      display: none !important;
+  }
+
+  .double-column-table {
+      flex-direction: column;
+      gap: 0;
+  }
+
+  .table-column {
+      width: 100%;
+      padding: 0;
+      gap: 0.3rem;
+  }
+
+  .data-table.fraud-methods td {
+      padding: 0.6rem;
+      font-size: 0.85rem;
+  }
+
+  .data-table.fraud-methods td:first-child {
+      font-size: 1.1rem;
+  }
+
+  .case-count {
+      font-size: 0.9rem;
+  }
+
+  .data-table.fraud-methods td:nth-child(3) {
+      font-size: 0.9rem;
+  }
+
+  .unit {
+      font-size: 0.7rem;
+  }
+
+  .arrow {
+      font-size: 0.9rem;
+  }
+
+  .data-table.fraud-methods tr:hover .arrow {
+      width: 18px;
+      height: 18px;
+  }
+
+  .data-table.fraud-methods tr:hover .arrow::before {
+      font-size: 0.8rem;
+  }
+
+  .top5-grid.enhanced {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+  }
+
+  .top5-card {
+      padding: 1rem 1.5rem;
+      font-size: 3rem;
+      gap: 1rem;
+  }
+
+  .top5-card.first {
+      grid-column: span 1;
+  }
+
+  .rank {
+      font-size: 3rem;
+  }
+
+  .type {
+      font-size: 2rem;
+  }
+
+  .details {
+      font-size: 1.8rem;
+  }
+
+  .related-info {
+      margin: 1rem 10px;
+      padding: 15px;
+  }
+
+  .related-info h4 {
+      font-size: 1.1rem;
+  }
+
+  .footer-container {
+      flex-direction: column;
+      gap: 15px;
+  }
+
+  .circular--squareP {
+      width: 35px;
+      height: 35px;
+  }
+
+  .footer-link p {
+      font-size: 0.7rem;
+  }
+
+  .chat-now-btn {
+      padding: 8px 25px;
+      font-size: 0.9rem;
+  }
+}
+
+/* 響應式設計 - 手機（480px以下） */
+@media (max-width: 480px) {
+  /* 地圖尺寸 */
+  .data-summary-card .map-wrapper {
+      padding-bottom: 75%;
+      min-height: 350px;
+      border-radius: 0;
+  }
+
+  .map-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+  }
+
+  /* 調整數據統計（更小螢幕） */
+  .data-table {
+      padding: 0.5rem;
+  }
+
+  .data-table th,
+  .data-table td {
+      padding: 0.3rem;
+      font-size: 0.8rem;
+  }
+
+  .data-table.fraud-methods td {
+      padding: 0.5rem;
+      font-size: 0.8rem;
+  }
+
+  .data-table.fraud-methods td:first-child {
+      font-size: 1rem;
+  }
+
+  .case-count {
+      font-size: 0.85rem;
+  }
+
+  .data-table.fraud-methods td:nth-child(3) {
+      font-size: 0.85rem;
+  }
+
+  .unit {
+      font-size: 0.65rem;
+  }
+
+  .arrow {
+      font-size: 0.85rem;
+  }
+
+  .data-table.fraud-methods tr:hover .arrow {
+      width: 16px;
+      height: 16px;
+  }
+
+  .data-table.fraud-methods tr:hover .arrow::before {
+      font-size: 0.7rem;
+  }
+
+  .top5-card {
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+  }
+
+  .rank {
+      font-size: 2.5rem;
+  }
+
+  .type {
+      font-size: 1.2rem;
+  }
+
+  .details {
+      font-size: 1.1rem;
+  }
+
+  .related-info {
+      padding: 10px;
+      margin: 0.5rem 10px;
+  }
+
+  .circular--squareP {
+      width: 30px;
+      height: 30px;
+  }
+
+  .footer-link p {
+      font-size: 0.65rem;
+  }
+
+  .chat-now-btn {
+      padding: 6px 20px;
+      font-size: 0.85rem;
+  }
+}

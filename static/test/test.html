@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>儀表板 - 詐騙問答系統</title>
+    <!-- 引入 Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap">
+    <!-- 引入整合後的 CSS -->
+    <link rel="stylesheet" href="/static/test.css">
+    
+    <!-- 引入 D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <nav class="dashboard-navbar">
+        <div class="dashboard-navbar-brand">詐騙問答系統</div>
+        <div class="dashboard-navbar-current-page">儀表板</div>
+        <div class="dashboard-navbar-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        
+        <div class="dashboard-navbar-links">
+            <a href="/home">首頁</a>
+            <a href="/chat">Chat165 機器人</a>
+            <a href="/dashboard" class="active">儀表板</a>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="dashboard-chat-header">
+            <div class="dashboard-chat-header-avatar"></div>
+            <div class="dashboard-chat-header-info">
+                <div class="dashboard-chat-header-name">儀表板</div>
+                <div class="dashboard-chat-header-desc">詐騙事件分佈與統計</div>
+            </div>
+            <div class="dashboard-chat-header-icon" title="這是一個儀表板"><i>ℹ️</i></div>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="dashboard-map-area">
+                <div class="dashboard-map-container">
+                    <h4>詐騙事件分佈地圖</h4>
+                    <div class="dashboard-map-wrapper">
+                        <svg id="dashboard-taiwan-map"></svg>
+                        <div class="dashboard-map-tooltip" id="dashboard-map-tooltip"></div>
+                    </div>
+                </div>
+                <div class="dashboard-data-details">
+                    <div class="dashboard-data-summary">
+                        <h4 id="dashboard-county-name">請選擇一個縣市</h4>
+                        <div class="dashboard-summary-stats">
+                            <div class="dashboard-stat">
+                                <p>案件數量 (件)</p>
+                                <h3 id="dashboard-total-cases">0</h3>
+                            </div>
+                            <div class="dashboard-stat">
+                                <p>財損總金額 (萬元)</p>
+                                <h3 id="dashboard-total-amount">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-data-table">
+                        <h5>詐騙手法為前 5 名</h5>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>詐騙類型 (件)</th>
+                                    <th>財損金額 (萬元)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-fraud-methods-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="dashboard-related-info">
+            <h4>相關資訊</h4>
+            <div class="dashboard-footer-container">
+                <a href="https://165.npa.gov.tw/#/" target="_blank" class="dashboard-footer-link">
+                    <img class="dashboard-circular--squareP" src="/static/photos/gov.png" alt="內政部警政署165">
+                    <p>內政部警政署165</p>
+                </a>
+                <a href="https://line.me/R/ti/p/@950pwvlr" target="_blank" class="dashboard-footer-link">
+                    <img class="dashboard-circular--squareP" src="/static/photos/line.jpg" alt="165 linebot">
+                    <p>165 linebot</p>
+                </a>
+                <a href="https://www.facebook.com/165bear/?locale=zh_TW" target="_blank" class="dashboard-footer-link">
+                    <img class="dashboard-circular--squareP" src="/static/photos/f.png" alt="165臉書粉專">
+                    <p>165臉書粉專</p>
+                </a>
+                <a href="https://www.youtube.com/@cib2128" target="_blank" class="dashboard-footer-link">
+                    <img class="dashboard-circular--squareP" src="/static/photos/yt.png" alt="刑事局YT">
+                    <p>刑事局YT</p>
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/map-interaction.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>

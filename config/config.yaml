@@ -1,0 +1,42 @@
+# 伺服器設定
+server:
+  host: "0.0.0.0"
+  port: 8091
+  debug: false
+  static_folder: "static"  # 靜態檔案資料夾路徑
+
+# Line Bot設定
+line:
+  channel_access_token: ""  # 從.env獲取
+  channel_secret: ""        # 從.env獲取
+
+# Ollama設定
+ollama:
+  base_url: "http://localhost:11434"  # Ollama伺服器URL
+  web_model: "mistral"                # Web端預設模型
+  line_model: "mistral"               # Line端預設模型
+  web:
+    base_url: "http://localhost:11434"
+    model: "mistral"
+  line:
+    base_url: "http://localhost:11434"
+    model: "mistral"
+    embedding_model: "mistral"
+
+# ChromaDB設定
+chroma:
+  path: "storage/data/chroma_db"  # ChromaDB資料庫路徑
+
+# 嵌入向量設定
+embedding:
+  file: "storage/data/embeddings.pkl"  # 嵌入向量檔案路徑
+  batch_size: 1000  # 批次大小
+
+# MySQL設定
+mysql:
+  enabled: false  # 若無資料庫或僅本機開發，設為 false 以停用 MySQL 紀錄
+  host: "localhost"
+  port: 3306
+  user: ""  # 從.env獲取
+  password: ""  # 從.env獲取
+  db_name: "scam_logs_db"  # 資料庫名稱

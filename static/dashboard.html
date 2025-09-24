@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>165 詐騙地圖儀表板</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap">
+  <link rel="icon" href="/static/photos/logo.jpg" type="image/x-icon" />
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson@3"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-left">
+      <div class="logo">
+        <img src="/static/photos/robot.png" alt="Logo" />
+      </div>
+      <ul class="nav-links">
+        <li><a href="/home">首頁</a></li>
+        <li><a href="/chat">Chat165 機器人</a></li>
+        <li><a href="/dashboard" class="active">防詐儀表板</a></li>
+      </ul>
+      <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dashboard-frame">
+    <main class="dashboard-content">
+
+      <!-- ✅ 各縣市數據統計：地圖 & 表格 -->
+      <h2 class="section-title">各縣市數據統計</h2>
+      <section class="data-summary-card">
+        <div class="map-wrapper">
+          <div id="taiwan-map"></div>
+          <div id="map-tooltip" class="map-tooltip"></div>
+        </div>
+
+        <div class="fraud-table-wrapper">
+          <div id="county-fraud-details" class="data-table fraud-methods" style="display: none;"></div>
+          <div id="back-button" style="display: none; text-align:center; margin-top: 1rem;">
+            <button class="chat-now-btn" onclick="showAllCounties()">返回總覽</button>
+          </div>
+
+          <table class="fraud-table mobile-header-table">
+            <thead>
+              <tr>
+                <th>縣市</th>
+                <th>問答件數</th>
+              </tr>
+            </thead>
+          </table>
+          <div class="double-column-table" id="fraud-double-table"></div>
+        </div>
+      </section>
+
+      <!-- ✅ 詐騙手法前 5 名 -->
+      <h2 class="section-title">詐騙手法前 5 名</h2>
+      <section class="top5-section">
+        <div class="top5-grid enhanced"></div>
+      </section>
+
+    </main>
+
+    <!-- ✅ Footer 保持原樣 -->
+    <footer class="related-info">
+      <h2 class="section-title-footer">相關資訊</h2>
+      <div class="footer-container">
+        <a href="https://165.npa.gov.tw/#/" target="_blank" class="footer-link">
+          <img class="circular--squareP" src="/static/photos/Police.png" alt="內政部警政署165">
+          <p>內政部警政署165</p>
+        </a>
+        <a href="https://line.me/R/ti/p/@950pwvlr" target="_blank" class="footer-link">
+          <img class="circular--squareP" src="/static/photos/chat165.jpg" alt="165 linebot">
+          <p>165 linebot</p>
+        </a>
+        <a href="https://www.facebook.com/165bear/?locale=zh_TW" target="_blank" class="footer-link">
+          <img class="circular--squareP" src="/static/photos/f.png" alt="165臉書粉專">
+          <p>165臉書粉專</p>
+        </a>
+        <a href="https://www.youtube.com/@cib2128" target="_blank" class="footer-link">
+          <img class="circular--squareP" src="/static/photos/yt.png" alt="刑事局YT">
+          <p>刑事局YT</p>
+        </a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ✅ Top5 資料填入 -->
+  <script>
+  fetch("/api/fraud-stats")
+      .then((res) => res.json())
+      .then((data) => {
+        const top5 = data.top5; // ✅ 修正名稱
+        const top5Container = document.querySelector(".top5-grid.enhanced");
+        top5Container.innerHTML = "";
+
+        top5.forEach((item, index) => {
+          const card = document.createElement("div");
+          card.classList.add("top5-card");
+          if (index === 0) card.classList.add("first");
+
+          card.innerHTML = `
+            <div class="rank">${index + 1}</div>
+            <div class="content">
+              <div class="type">${item.type}</div>
+              <div class="details">
+                <span>問答件數:</span> <strong>${item.count}</strong>
+              </div>
+            </div>
+          `;
+
+          top5Container.appendChild(card);
+        });
+      })
+      .catch((err) => {
+        console.error("載入 fraud-stats 發生錯誤", err);
+      });
+  </script>
+
+  <!-- ✅ 地圖互動與資料 -->
+  <script src="./static/js/map-interaction.js"></script>
+  <script src="./static/js/dashboard.js"></script>
+</body>
+</html>

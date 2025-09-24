@@ -1,0 +1,391 @@
+/* dashboard.css */
+
+/* 基礎樣式 */
+body {
+    font-family: 'Noto Sans TC', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to bottom right, #dad4d4, #2b2121);
+    background-image: url("https://www.transparenttextures.com/patterns/diagmonds-light.png");
+    color: #241e1e;
+    min-height: 90vh;
+}
+
+.dashboard-container {
+    width: 90%;
+    margin: 1rem auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    box-sizing: border-box;
+    padding: 0;
+    overflow-y: auto;
+    z-index: 1;
+}
+
+a {
+    text-decoration: none;
+    color: #7f615c;
+    text-align: center;
+}
+
+a:hover {
+    color: #a88b86;
+}
+
+/* 導航欄樣式 */
+.dashboard-navbar {
+    background-color: #333;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard-navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.dashboard-navbar-current-page {
+    font-size: 1rem;
+}
+
+.dashboard-navbar-toggle {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.dashboard-navbar-toggle span {
+    width: 25px;
+    height: 3px;
+    background-color: white;
+    margin: 2px 0;
+}
+
+.dashboard-navbar-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.dashboard-navbar-links a {
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.dashboard-navbar-links a:hover {
+    color: #ffcc00;
+}
+
+.dashboard-navbar-links a.active {
+    color: #ffcc00;
+    font-weight: bold;
+}
+
+/* 聊天標頭樣式 */
+.dashboard-chat-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: #e0e0e0;
+    border-bottom: 1px solid #ddd;
+}
+
+.dashboard-chat-header-avatar {
+    width: 40px;
+    height: 40px;
+    background-color: #ccc;
+    border-radius: 50%;
+    margin-right: 1rem;
+}
+
+.dashboard-chat-header-info {
+    flex: 1;
+}
+
+.dashboard-chat-header-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.dashboard-chat-header-desc {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.dashboard-chat-header-icon {
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #666;
+}
+
+/* 儀表板內容樣式 */
+.dashboard-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 0;
+    background-color: transparent;
+}
+
+.dashboard-map-area {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    padding: 1rem;
+    gap: 1rem;
+}
+
+.dashboard-map-container {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #444;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 3%;
+}
+
+.dashboard-map-wrapper {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    background: transparent;
+}
+
+#dashboard-taiwan-map {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: transparent;
+    visibility: visible;
+}
+
+.dashboard-map-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    display: none;
+    font-size: 0.9rem;
+    transition: opacity 0.3s ease;
+}
+
+.dashboard-county {
+    fill: #a3d4e6;
+    stroke: #ffffff;
+    stroke-width: 1px;
+    transition: transform 0.3s ease;
+}
+
+.dashboard-county:hover {
+    transform: scale(1.1);
+    fill: #74ebd5;
+}
+
+.dashboard-county.active {
+    fill: #ffcc00;
+    stroke: #000;
+    stroke-width: 2px;
+}
+
+.dashboard-county.selected {
+    fill: #ffcc00;
+    stroke: #000;
+    stroke-width: 2px;
+}
+
+.dashboard-data-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+}
+
+.dashboard-data-summary {
+    margin-bottom: 1rem;
+}
+
+.dashboard-data-summary h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.dashboard-summary-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.dashboard-stat {
+    flex: 1;
+    text-align: center;
+    background: #f5f5f5;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.dashboard-stat p {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.dashboard-stat h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #333;
+}
+
+.dashboard-data-table h5 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.dashboard-data-table table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #333;
+}
+
+.dashboard-data-table th,
+.dashboard-data-table td {
+    padding: 0.75rem;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.dashboard-data-table th {
+    background-color: #3498db;
+    color: white;
+}
+
+.dashboard-data-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.dashboard-data-table tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-related-info {
+    width: 85%;
+    margin: 1rem auto;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    color: #fff;
+    text-align: center;
+}
+
+.dashboard-footer-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.dashboard-footer-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #fff;
+    text-decoration: none;
+}
+
+.dashboard-footer-link:hover {
+    color: #ffcc00;
+}
+
+.dashboard-circular--squareP {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-footer-link p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .dashboard-navbar-toggle {
+        display: flex;
+    }
+    .dashboard-navbar-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        background-color: #333;
+        padding: 1rem;
+    }
+    .dashboard-navbar-links.active {
+        display: flex;
+    }
+    .dashboard-map-area {
+        flex-direction: column;
+    }
+    .dashboard-map-wrapper {
+        height: 300px;
+    }
+    .dashboard-data-details {
+        padding: 1rem;
+    }
+    .dashboard-summary-stats {
+        flex-direction: column;
+    }
+    .dashboard-related-info {
+        padding: 0.5rem;
+    }
+    .dashboard-circular--squareP {
+        width: 40px;
+        height: 40px;
+    }
+    .dashboard-footer-link p {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-map-wrapper {
+        height: 200px;
+    }
+    .dashboard-related-info {
+        padding: 0.3rem;
+    }
+    .dashboard-circular--squareP {
+        width: 30px;
+        height: 30px;
+    }
+    .dashboard-footer-link p {
+        font-size: 0.7rem;
+    }
+}
