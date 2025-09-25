@@ -12,12 +12,12 @@ line:
 
 # Ollama設定
 ollama:
-  base_url: "http://localhost:11434"  # Ollama伺服器URL
-  web_model: "mistral"                # Web端預設模型
-  line_model: "mistral"               # Line端預設模型
+  base_url: "http://localhost:11434"                         # Ollama伺服器URL
+  web_model: "ycchen/breeze-7b-instruct-v1_0"                # Web端預設模型
+  line_model: "mistral"                                      # Line端預設模型
   web:
     base_url: "http://localhost:11434"
-    model: "mistral"
+    model: "ycchen/breeze-7b-instruct-v1_0"
   line:
     base_url: "http://localhost:11434"
     model: "mistral"
