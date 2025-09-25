@@ -117,6 +117,21 @@ class ReplyFormatter:
         s = re.sub(r"詐騙\s*機率", "詐騙風險", s)
         s = re.sub(r"(詐騙\s*風險\s*[：:]\s*)\d{1,3}\s*%", r"\1" + (risk_level or "高"), s)
 
+        # 移除所有單獨存在的「🔍 分析內容：」標題行，避免多次格式化累加
+        cleaned_lines = []
+        for line in s.splitlines():
+            if re.match(r"^\s*🔍\s*分析內容\s*：?\s*$", line):
+                continue
+            # 避免連續重覆相同行（可能是模型重複生成的標題或空白）
+            if cleaned_lines and line.strip() and line.strip() == cleaned_lines[-1].strip():
+                continue
+            cleaned_lines.append(line)
+        s = "\n".join(cleaned_lines).strip()
+
+        # 若清理後內容為空，提供預設占位文字，避免出現空白區塊
+        if not s:
+            s = "（本次輸入內容過短，無法提供進一步分析。）"
+
         return risk_level, s
 
     @staticmethod
