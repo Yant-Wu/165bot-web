@@ -32,6 +32,14 @@ def dashboard():
     folder = current_app.static_folder
     return send_from_directory(folder, "dashboard.html")
 
+@web_bp.route("/voice")
+def voice():
+    """
+    語音頁面路由（返回voice.html）
+    """
+    folder = current_app.static_folder
+    return send_from_directory(folder, "voice.html")
+
 @web_bp.route("/static/<path:path>")
 def serve_static(path):
     """

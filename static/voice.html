@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>反詐騙通話系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 基本頁面與背景樣式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #000000, #111827, #1e3a8a);
+            color: #e5e7eb;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        body::-webkit-scrollbar { display: none; }
+        body { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .backdrop-blur-lg {
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+
+        /* 聲波動畫容器 */
+        .sound-wave-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 連線中 - 靜態漣漪 */
+        .wave {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 120px; height: 120px;
+            margin-left: -60px; margin-top: -60px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: ripple-static 2.5s infinite ease-out;
+            opacity: 0; visibility: hidden;
+        }
+        @keyframes ripple-static {
+            0% { transform: scale(0.5); opacity: 0.6; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+
+        /* 通話中 - 動態漣漪 */
+        .dynamic-wave {
+            position: absolute;
+            border-radius: 50%;
+            transform-origin: center;
+        }
+
+        /* 中心視覺元素/靜音按鈕 樣式 */
+        #centerVisualElement { 
+            position: absolute; 
+            width: 3.5rem; 
+            height: 3.5rem; 
+            background-color: #3b82f6; /* Default blue */
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem; 
+            font-weight: bold;
+            transition: background-color 0.2s ease, transform 0.2s ease, opacity 0.3s ease;
+            overflow: hidden; 
+            z-index: 10; 
+        }
+        #centerVisualElement.is-interactive-mute-button { 
+            cursor: pointer;
+        }
+        #centerVisualElement.glow { 
+            box-shadow: 0 0 20px 5px rgba(59, 130, 246, 0.5);
+        }
+        #centerVisualElement.scale-\[2\] { 
+            transform: scale(2) !important;
+        }
+        #centerVisualElement.is-muted { 
+            background-color: rgba(220, 38, 38, 0.8); 
+        }
+        .mute-text-m { transition: opacity 0.2s ease; }
+        #centerVisualElement.is-muted .mute-text-m { opacity: 0.4; }
+        .mute-overlay-slash {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 60%; height: 4px; 
+            background-color: white;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            display: none;
+            border-radius: 2px;
+            pointer-events: none;
+        }
+        #centerVisualElement.is-muted .mute-overlay-slash { display: block; }
+
+
+        /* 標題文字漸層 */
+        .text-gradient {
+            letter-spacing: -0.065em;
+            font-weight: 900;
+            font-size: 2.5rem;
+            background: linear-gradient(-70deg, #db469f, #2188ff);
+            -webkit-background-clip: text;
+            color: #2188ff;
+        }
+        .text-gradient.is-connecting,
+        .text-gradient.is-live {
+             -webkit-text-fill-color: transparent;
+        }
+
+        /* "連線中..." 文字與點點動畫 */
+        .text-connecting-active .connect-text-main {
+            display: inline-block;
+            animation: pulse-text-main 1.8s infinite ease-in-out;
+            color: white; -webkit-text-fill-color: white; 
+            background: none; -webkit-background-clip: initial; 
+        }
+        .text-connecting-active .loading-dots span {
+            display: inline-block; opacity: 0; transform: scale(0.5);
+            animation: wave-dot 1.5s infinite; margin: 0 1px;
+            color: white; -webkit-text-fill-color: white;
+            background: none; -webkit-background-clip: initial;
+        }
+        .text-connecting-active .loading-dots span:nth-child(1) { animation-delay: 0s; }
+        .text-connecting-active .loading-dots span:nth-child(2) { animation-delay: 0.25s; }
+        .text-connecting-active .loading-dots span:nth-child(3) { animation-delay: 0.5s; }
+        @keyframes pulse-text-main {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.03); }
+        }
+        @keyframes wave-dot {
+            0%   { opacity: 0; transform: scale(0.5) translateY(3px); }
+            25%  { opacity: 1; transform: scale(1.1) translateY(-2px); }
+            50%  { opacity: 1; transform: scale(1) translateY(0px); }
+            75%  { opacity: 0.5; transform: scale(0.8) translateY(2px); }
+            100% { opacity: 0; transform: scale(0.5) translateY(3px); }
+        }
+
+        /* "通話中..." 文字動畫 */
+        .text-live-animation { animation: pulse-glow 2.5s infinite ease-in-out; }
+        @keyframes pulse-glow {
+            0%, 100% { text-shadow: 0 0 5px rgba(220, 220, 255, 0.25), 0 0 10px rgba(100, 150, 255, 0.15), 0 0 15px rgba(219, 70, 159, 0.1); }
+            50%      { text-shadow: 0 0 10px rgba(230, 230, 255, 0.5), 0 0 20px rgba(80, 130, 255, 0.3), 0 0 30px rgba(219, 70, 159, 0.2); }
+        }
+
+        /* Toast 提示樣式 */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; 
+            z-index: 1000; display: none; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); 
+            color: white; text-align: center;
+        }
+        .toast.error   { background-color: #dc2626; } 
+        .toast.warning { background-color: #f97316; color: white; } 
+        .toast.info    { background-color: #2563eb; } 
+
+        /* 按鈕 Spinner */
+        .spinner {
+            width: 18px; height: 18px; border: 2px solid currentColor;
+            border-top-color: transparent; border-radius: 50%;
+            animation: spin 0.8s linear infinite; display: inline-block; margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* 通用按鈕樣式 */
+        button { transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        button:active:not(:disabled) { transform: scale(0.97); }
+        button:hover:not(:disabled) { box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+
+        /* 結束通話按鈕（底部）的新樣式 */
+        #endCallButton {
+            position: absolute;
+            bottom: 2.5rem; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4rem; 
+            height: 4rem; 
+            background-color: #dc2626; 
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.875rem; 
+            font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); 
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            z-index: 20;
+        }
+        #endCallButton:hover { background-color: #b91c1c; } 
+        #endCallButton:active { transform: translateX(-50%) scale(0.95); } 
+        #endCallButton.hidden { display: none; }
+
+
+    </style>
+</head>
+
+<body>
+
+    <div id="toast-container" class="absolute top-5 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"></div>
+
+    <div id="initialScreen" class="text-center p-8 bg-gray-800 bg-opacity-30 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-xs sm:max-w-sm z-10">
+        <h1 class="text-gradient mb-6 text-4xl sm:text-5xl">即時語音助理</h1>
+        <p class="text-gray-300 mb-8 text-sm sm:text-base">點擊下方按鈕開始與 AI 助理通話。</p>
+        <button id="recordButton" 
+                class="w-full px-6 py-3 bg-blue-600 text-white text-lg font-semibold rounded-lg shadow-md 
+                       hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50
+                       active:bg-blue-800">
+            開始錄音
+        </button>
+    </div>
+
+    <div id="recordingScreen" class="hidden flex flex-col items-center justify-center h-full w-full absolute inset-0 z-0">
+        <h1 id="connectionStatusHeading" class="mb-8 text-gradient text-4xl sm:text-5xl"></h1>
+        <div class="sound-wave-container" id="soundWaveContainer">
+            <div class="wave" style="animation-delay: 0s"></div>
+            <div class="wave" style="animation-delay: 0.5s"></div>
+            <div class="wave" style="animation-delay: 1s"></div>
+            <div class="wave" style="animation-delay: 1.5s"></div>
+            <div class="wave" style="animation-delay: 2s"></div>
+            
+            <div id="centerVisualElement" class="hidden">
+            </div>
+        </div>
+        
+        <button id="endCallButton" class="hidden" title="結束通話">
+            &#x2715;
+        </button>
+    </div>
+
+    <audio id="audio-output" autoplay></audio>
+
+    <script>
+        // --- DOM 元素參考 ---
+        const recordButton = document.getElementById("recordButton");
+        const initialScreen = document.getElementById("initialScreen");
+        const recordingScreen = document.getElementById("recordingScreen");
+        const centerVisualElement = document.getElementById("centerVisualElement"); 
+        const endCallButton = document.getElementById("endCallButton"); 
+        const staticWaves = document.querySelectorAll(".sound-wave-container > .wave");
+        const soundWaveContainer = document.getElementById("soundWaveContainer");
+        const audioOutput = document.getElementById('audio-output');
+        const toastContainer = document.getElementById('toast-container');
+        const connectionStatusHeading = document.getElementById('connectionStatusHeading');
+
+        // --- 全域變數 ---
+        let audioContext;
+        let analyser_input, dataArray_input, animationId_input_visualizer;
+        let analyser_output, dataArray_output, animationId_output_visualizer;
+        let chatHistory = []; 
+        let peerConnection;
+        let webrtc_id; 
+        let eventSource = null;
+        let isActuallyRecording = false;
+        let lastMicWaveTime = 0, lastReceivedWaveTime = 0;
+        const WAVE_THROTTLE_MS = 120; 
+        let isMuted = false; 
+        let localStreamRef = null; 
+
+        // --- 工具函數 ---
+        function showToast(message, type = 'info') {
+            if (!toastContainer) { console.error("Toast container not found!"); alert(message); return; }
+            const toast = document.createElement('div');
+            toast.className = `toast ${type} mb-2`; 
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                toast.style.transform = 'translateY(-20px)'; 
+                setTimeout(() => { if (toast.parentNode === toastContainer) { toastContainer.removeChild(toast); } }, 500);
+            }, 3000); 
+        }
+
+        // --- UI 更新函數 ---
+        function setConnectionStatusText(statusText, showConnectingAnimation = false) {
+            if (!connectionStatusHeading) return;
+            if (showConnectingAnimation) { 
+                connectionStatusHeading.innerHTML = `<span class="connect-text-main">${statusText}</span><span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                connectionStatusHeading.classList.add("text-connecting-active", "is-connecting");
+                connectionStatusHeading.classList.remove("text-live-animation", "is-live");
+            } else { 
+                connectionStatusHeading.textContent = statusText;
+                connectionStatusHeading.classList.remove("text-connecting-active", "is-connecting");
+                connectionStatusHeading.classList.add("text-live-animation", "is-live");
+            }
+        }
+
+        function startRecordingUI() {
+            initialScreen.classList.add("hidden");
+            recordingScreen.classList.remove("hidden");
+            if (endCallButton) endCallButton.classList.remove("hidden"); 
+            
+            setConnectionStatusText("連線中", true);
+            
+            if (centerVisualElement) {
+                centerVisualElement.classList.remove("hidden", "is-muted", "is-interactive-mute-button");
+                centerVisualElement.innerHTML = ''; 
+                centerVisualElement.title = ''; 
+                centerVisualElement.style.opacity = "1";
+                centerVisualElement.classList.add("animate-pulse", "glow", "scale-[2]"); 
+                centerVisualElement.removeEventListener('click', toggleMute);
+            }
+
+            staticWaves.forEach((w) => {
+                w.style.visibility = "visible";
+                w.style.animationPlayState = 'running';
+            });
+        }
+
+        function stopRecordingUI() {
+            initialScreen.classList.remove("hidden");
+            recordingScreen.classList.add("hidden");
+            if (endCallButton) endCallButton.classList.add("hidden"); 
+            
+            setConnectionStatusText("連線中", true); 
+            
+            isMuted = false; 
+            if (centerVisualElement) {
+                centerVisualElement.classList.add("hidden"); 
+                centerVisualElement.classList.remove('is-muted', "animate-pulse", "glow", "scale-[2]", "is-interactive-mute-button");
+                centerVisualElement.innerHTML = ''; 
+                centerVisualElement.title = '';
+                centerVisualElement.removeEventListener('click', toggleMute);
+            }
+            localStreamRef = null; 
+
+            staticWaves.forEach((w) => {
+                w.style.visibility = "hidden";
+                w.style.animationPlayState = 'paused';
+                w.style.animation = 'ripple-static 2.5s infinite ease-out'; 
+            });
+            document.querySelectorAll('.dynamic-wave').forEach(dw => dw.remove());
+            recordButton.innerHTML = '開始錄音';
+            recordButton.disabled = false;
+        }
+
+        function updateButtonStateConnecting() {
+            recordButton.innerHTML = `<span class="spinner"></span> 連線中...`;
+            recordButton.disabled = true;
+        }
+
+        function activateConnectedVisuals() {
+            setConnectionStatusText("通話中");
+            staticWaves.forEach((w) => {
+                w.style.animation = 'none'; 
+                w.style.visibility = 'hidden';
+            });
+            if (centerVisualElement) {
+                centerVisualElement.classList.remove("animate-pulse", "glow", "scale-[2]");
+                centerVisualElement.style.transform = "scale(1)"; // Set to fixed base scale for connected state
+                centerVisualElement.innerHTML = '<span class="mute-text-m">M</span><span class="mute-overlay-slash"></span>'; 
+                centerVisualElement.title = '靜音';
+                centerVisualElement.classList.add('is-interactive-mute-button');
+                centerVisualElement.classList.remove('is-muted'); 
+                centerVisualElement.removeEventListener('click', toggleMute); 
+                centerVisualElement.addEventListener('click', toggleMute);
+            }
+
+            if (isActuallyRecording && audioContext && analyser_input && !animationId_input_visualizer) {
+                updateAudioLevelVisualizer();
+            }
+            if (isActuallyRecording && peerConnection && audioOutput.srcObject && !analyser_output) {
+                 setupReceivedAudioAnalyzer();
+            }
+        }
+
+        function createDynamicWave(isOutgoing) {
+            if (!soundWaveContainer) return;
+            const now = Date.now();
+            if (isOutgoing && (now - lastMicWaveTime < WAVE_THROTTLE_MS)) return;
+            if (!isOutgoing && (now - lastReceivedWaveTime < WAVE_THROTTLE_MS)) return;
+
+            if (isOutgoing) lastMicWaveTime = now; else lastReceivedWaveTime = now;
+
+            const waveEl = document.createElement('div');
+            waveEl.className = 'dynamic-wave';
+            const size = Math.random() * 30 + 70; 
+            waveEl.style.width = `${size}px`; waveEl.style.height = `${size}px`;
+            waveEl.style.border = `3.5px solid ${isOutgoing ? 'rgba(59, 130, 246, 0.75)' : 'rgba(219, 70, 159, 0.75)'}`; 
+            waveEl.style.opacity = '0.85'; 
+            soundWaveContainer.appendChild(waveEl);
+            waveEl.animate([
+                { transform: 'scale(0.2)', opacity: 0.85 }, 
+                { transform: `scale(${Math.random() * 1.2 + 2.8})`, opacity: 0 } 
+            ], { duration: 1300 + Math.random() * 400, easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }) 
+            .onfinish = () => waveEl.remove();
+        }
+
+        // --- 靜音功能 ---
+        function toggleMute() {
+            if (!localStreamRef || !centerVisualElement.classList.contains('is-interactive-mute-button')) { 
+                console.warn("本地音訊流尚未初始化或按鈕非互動狀態，無法切換靜音狀態。");
+                if (!localStreamRef) showToast("錯誤：音訊流未就緒", "error");
+                return;
+            }
+            isMuted = !isMuted;
+            localStreamRef.getAudioTracks().forEach(track => {
+                track.enabled = !isMuted;
+            });
+
+            centerVisualElement.title = isMuted ? '取消靜音' : '靜音';
+            centerVisualElement.classList.toggle('is-muted', isMuted); 
+            showToast(isMuted ? "麥克風已靜音" : "麥克風已取消靜音", "info");
+            
+            console.log(isMuted ? "麥克風已靜音" : "麥克風已取消靜音");
+        }
+
+        // --- WebRTC 核心邏輯 ---
+        const BACKEND_BASE_URL = "http://203.145.202.91:8080"; 
+        async function getRTCConfigFromServer() {
+            try {
+                //const response = await fetch(`${BACKEND_BASE_URL}/api/rtc-config`);
+                const response = await fetch(`${BACKEND_BASE_URL}/api/local-rtc-config`);
+                if (!response.ok) throw new Error(`無法獲取 RTC 設定: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error("獲取 RTC 設定失敗:", error);
+                showToast(`RTC 設定錯誤: ${error.message}，將使用預設 STUN。`, "error");
+                return { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+            }
+        }
+        
+        function setupReceivedAudioAnalyzer() {
+            if (!audioOutput.srcObject || analyser_output || !audioContext) return; 
+            try {
+                const outputSource = audioContext.createMediaStreamSource(audioOutput.srcObject);
+                analyser_output = audioContext.createAnalyser();
+                analyser_output.fftSize = 64;
+                analyser_output.smoothingTimeConstant = 0.4;
+                outputSource.connect(analyser_output);
+                dataArray_output = new Uint8Array(analyser_output.frequencyBinCount);
+                if (!animationId_output_visualizer) updateReceivedAudioLevelVisualizer();
+                console.log("接收音訊分析器已設定。");
+            } catch (e) { console.error("設定接收音訊分析器時發生錯誤:", e); showToast("無法分析接收的音訊。", "warning");}
+        }
+
+        async function setupWebRTC() {
+            console.log("setupWebRTC called");
+            isActuallyRecording = false;
+            updateButtonStateConnecting();
+            setConnectionStatusText("連線中", true); 
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast("您的瀏覽器不支援麥克風存取。", "error"); stopAndResetAll(); return;
+            }
+            const rtcConfig = await getRTCConfigFromServer();
+            if (!rtcConfig || !rtcConfig.iceServers || rtcConfig.iceServers.length === 0) {
+                showToast("無效的 RTC 設定，無法建立連線。", "error"); stopAndResetAll(); return;
+            }
+            if (peerConnection && peerConnection.connectionState !== 'closed') await stopAndResetAll();
+            try { peerConnection = new RTCPeerConnection(rtcConfig); }
+            catch (e) { console.error("建立 RTCPeerConnection 失敗:", e); showToast(`建立 WebRTC 連線失敗: ${e.message}`, "error"); stopAndResetAll(); return; }
+            
+            webrtc_id = Math.random().toString(36).substring(2, 10);
+            console.log(`已產生 webrtc_id: ${webrtc_id}`);
+            
+            chatHistory = [];
+            console.log("新的 RTCPeerConnection 已建立。");
+            const connectionTimeout = setTimeout(() => {
+                if (peerConnection && peerConnection.connectionState !== 'connected' && isActuallyRecording) {
+                    showToast("連線時間過長，請檢查您的網路或 VPN 設定。", "warning");
+                }
+            }, 12000); 
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                localStreamRef = stream; 
+                isActuallyRecording = true;
+                startRecordingUI(); 
+
+                if (audioContext && audioContext.state !== 'closed') await audioContext.close();
+                audioContext = new AudioContext(); 
+                analyser_input = audioContext.createAnalyser();
+                const inputSource = audioContext.createMediaStreamSource(stream);
+                inputSource.connect(analyser_input);
+                analyser_input.fftSize = 64;
+                analyser_input.smoothingTimeConstant = 0.3;
+                dataArray_input = new Uint8Array(analyser_input.frequencyBinCount);
+
+                stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+                
+                peerConnection.onconnectionstatechange = () => { 
+                    console.log('連線狀態已變更:', peerConnection.connectionState);
+                    if (peerConnection.connectionState === 'connected') {
+                        clearTimeout(connectionTimeout);
+                        showToast("連線成功！", "info");
+                        activateConnectedVisuals();
+                        recordButton.innerHTML = '通話中 (點此結束)'; 
+                        recordButton.disabled = false;
+                    } else if (['closed', 'failed', 'disconnected'].includes(peerConnection.connectionState)) {
+                        if (isActuallyRecording) showToast("連線已中斷。", "error");
+                        stopAndResetAll();
+                    }
+                };
+
+                peerConnection.ontrack = (evt) => { 
+                    if (audioOutput && evt.streams && evt.streams[0]) {
+                        if (audioOutput.srcObject !== evt.streams[0]) {
+                            audioOutput.srcObject = evt.streams[0];
+                            audioOutput.play().catch(e => console.error("音訊播放失敗:", e));
+                            if (peerConnection && peerConnection.connectionState === 'connected') {
+                                setupReceivedAudioAnalyzer();
+                            }
+                        }
+                    }
+                };
+                
+                peerConnection.onicecandidate = event => { 
+                    if (event.candidate) { 
+                        console.log("收集到本地 ICE candidate (不單獨傳送):", event.candidate.candidate.substring(0, 30) + "...");
+                    } else if (!event.candidate) {
+                        console.log("已收集所有本地 ICE candidate。");
+                    }
+                };
+
+                peerConnection.onicegatheringstatechange = () => { 
+                     console.log("ICE 收集狀態已變更:", peerConnection.iceGatheringState);
+                };
+
+                const dataChannel = peerConnection.createDataChannel('text', { reliable: true });
+                dataChannel.onmessage = event => {
+                    console.log("資料通道收到訊息:", event.data.substring(0,100) + "...");
+                    try {
+                        const eventJson = JSON.parse(event.data);
+                        if (eventJson.type === "error") {
+                            showToast(`伺服器錯誤: ${eventJson.message}`, "error");
+                        } else if (eventJson.type === "send_input") {
+                            console.log("收到 'send_input' 指令，呼叫 /input_hook");
+                            fetch(`${BACKEND_BASE_URL}/input_hook`, { 
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ webrtc_id: webrtc_id, chatbot: chatHistory })
+                            }).catch(err => console.error("傳送 input_hook 時發生錯誤:", err));
+                        } else if (eventJson.type === "log") {
+                            console.log("來自伺服器的日誌訊息:", eventJson.data);
+                        }
+                    } catch (e) { console.error("解析資料通道訊息時發生錯誤:", event.data, e); }
+                };
+                dataChannel.onerror = error => { 
+                    console.error("資料通道發生錯誤:", error);
+                    showToast("資料通道發生錯誤。", "error");
+                };
+
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer); 
+                
+                console.log("等待 ICE 收集完成後傳送 offer...");
+                await new Promise(resolve => { 
+                    if (peerConnection.iceGatheringState === "complete") resolve();
+                    else peerConnection.onicegatheringstatechange = () => { 
+                        if (peerConnection.iceGatheringState === "complete") resolve();
+                    };
+                });
+                console.log("ICE 收集完成 (用於 offer)。");
+                                
+                const response = await fetch(`${BACKEND_BASE_URL}/webrtc/offer`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sdp: peerConnection.localDescription.sdp, type: peerConnection.localDescription.type, webrtc_id })
+                });
+                if (!response.ok) { const txt = await response.text(); throw new Error(`伺服器回應錯誤: ${response.status} - ${txt}`);}
+                const serverResponse = await response.json();
+                if (serverResponse.status === 'failed' || !serverResponse.sdp || !serverResponse.type) throw new Error('伺服器處理 offer 失敗或 SDP Answer 格式不正確');
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(serverResponse));
+
+                if (eventSource) eventSource.close();
+                eventSource = new EventSource(`${BACKEND_BASE_URL}/outputs?webrtc_id=${webrtc_id}`); 
+                eventSource.onmessage = event => { console.log("SSE 訊息:", event.data.substring(0,100) + "...") };
+                eventSource.onerror = err => { if(isActuallyRecording) showToast("事件連線失敗。", "error"); if(eventSource) eventSource.close();};
+
+            } catch (err) {
+                clearTimeout(connectionTimeout);
+                console.error('setupWebRTC 期間發生錯誤:', err);
+                showToast(`連線失敗: ${err.message}.`, "error");
+                await stopAndResetAll();
+            }
+        }
+        
+        function updateAudioLevelVisualizer() { 
+            if (!isActuallyRecording || !analyser_input || !audioContext || audioContext.state === 'closed' || (peerConnection && peerConnection.connectionState !== 'connected')) {
+                if (animationId_input_visualizer) cancelAnimationFrame(animationId_input_visualizer);
+                animationId_input_visualizer = null;
+                // Do not reset centerVisualElement scale here if it's meant to be fixed during "connected"
+                return;
+            }
+            analyser_input.getByteFrequencyData(dataArray_input);
+            const average = dataArray_input.reduce((a, b) => a + b, 0) / dataArray_input.length;
+            const audioLevel = Math.min(1, average / 128); 
+            
+            // centerVisualElement scale is now fixed during connected state, no longer driven by audioLevel here.
+            // if (centerVisualElement) { 
+            //     const baseScale = 1; 
+            //     centerVisualElement.style.transform = `scale(${baseScale + audioLevel * 0.8})`; 
+            // }
+
+            if (audioLevel > 0.12) createDynamicWave(true); 
+            animationId_input_visualizer = requestAnimationFrame(updateAudioLevelVisualizer);
+        }
+
+        function updateReceivedAudioLevelVisualizer() { 
+             if (!isActuallyRecording || !analyser_output || !audioContext || audioContext.state === 'closed' || (peerConnection && peerConnection.connectionState !== 'connected')) {
+                if (animationId_output_visualizer) cancelAnimationFrame(animationId_output_visualizer);
+                animationId_output_visualizer = null;
+                return;
+            }
+            analyser_output.getByteFrequencyData(dataArray_output);
+            const average = dataArray_output.reduce((a,b) => a+b, 0) / dataArray_output.length;
+            const audioLevel = Math.min(1, average / 128); 
+            if (audioLevel > 0.08) createDynamicWave(false); 
+            animationId_output_visualizer = requestAnimationFrame(updateReceivedAudioLevelVisualizer);
+        }
+
+        async function stopAndResetAll() {
+            console.log("stopAndResetAll() called.");
+            isActuallyRecording = false;
+            if (animationId_input_visualizer) cancelAnimationFrame(animationId_input_visualizer);
+            animationId_input_visualizer = null;
+            if (animationId_output_visualizer) cancelAnimationFrame(animationId_output_visualizer);
+            animationId_output_visualizer = null;
+            
+            if (localStreamRef) { 
+                localStreamRef.getTracks().forEach(track => track.stop());
+                localStreamRef = null;
+            }
+            isMuted = false; 
+
+            stopRecordingUI(); 
+
+            if (audioContext && audioContext.state !== 'closed') {
+                try { await audioContext.close(); } catch (e) { console.error("關閉 AudioContext 時發生錯誤:", e); }
+            }
+            audioContext = null;
+            analyser_input = null; dataArray_input = null;
+            analyser_output = null; dataArray_output = null;
+            if (peerConnection) {
+                try {
+                    peerConnection.onconnectionstatechange = null;
+                    peerConnection.ontrack = null;
+                    peerConnection.onicecandidate = null;
+                    peerConnection.onicegatheringstatechange = null;
+                    if (peerConnection.sctp && peerConnection.sctp.transport && peerConnection.sctp.transport.onerror) { 
+                        peerConnection.sctp.transport.onerror = null;
+                    }
+                    
+                    peerConnection.getTransceivers().forEach(t => { if(t.stop) t.stop(); if(t.sender && t.sender.track) t.sender.track.stop(); if(t.receiver && t.receiver.track) t.receiver.track.stop();});
+                    if (peerConnection.connectionState !== 'closed') peerConnection.close();
+                } catch (e) { console.error("停止軌道/關閉 PeerConnection 時發生錯誤:", e); }
+                peerConnection = null;
+            }
+            if (audioOutput && audioOutput.srcObject) {
+                audioOutput.srcObject.getTracks().forEach(track => track.stop());
+                audioOutput.srcObject = null; audioOutput.pause(); audioOutput.removeAttribute('src'); audioOutput.load();
+            }
+            if (eventSource) { eventSource.close(); eventSource = null; }
+            console.log("stopAndResetAll() 完成。");
+        }
+
+        // --- 事件監聽器 ---
+        recordButton.addEventListener("click", () => {
+            if (recordButton.disabled) return;
+            if (!isActuallyRecording) setupWebRTC();
+            else if (recordButton.textContent.includes("通話中")) stopAndResetAll();
+        });
+        
+        if (endCallButton) { 
+            endCallButton.addEventListener("click", () => stopAndResetAll());
+        }
+        
+        // 初始狀態下不為 centerVisualElement 綁定 toggleMute，在 activateConnectedVisuals 中綁定
+
+        // --- 初始狀態 ---
+        stopRecordingUI(); 
+        console.log("頁面已載入，UI 已初始化。");
+    </script>
+</body>
+</html>
