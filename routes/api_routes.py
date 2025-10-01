@@ -10,6 +10,7 @@ from services.reply_formatter import ReplyFormatter
 from storage.memory_manager import MemoryManager
 from storage.csv_logger import CSVLogger
 from storage.mysql_logger import MySQLLogger
+from config.paths import STORAGE_BASE_DIR
 
 # 建立Blueprint
 api_bp = Blueprint("api", __name__)
@@ -230,59 +231,177 @@ def health_check():
 def fraud_stats():
     """
     提供前端儀表板使用的詐騙統計資料。
-    來源：CSV 日誌檔 `scam_logs.csv`（欄位：timestamp, county, user_input, scam_type）。
+    來源：合併 CSV 日誌檔和即時資料（MySQL/JSON）。
 
     回傳格式：
     {
       "county_counts": [
-        {"county": "台北市", "count": 12, "top5": [{"type": "假投資", "count": 5}, ...] },
+        {"county": "台北市", "count": 12, "csv_count": 8, "live_count": 4, 
+         "top5": [{"type": "假投資", "count": 5}, ...] },
         ...
       ],
-      "top5": [ {"type": "假投資", "count": 20}, ... ]
+      "top5": [ {"type": "假投資", "count": 20}, ... ],
+      "summary": {...}
     }
     """
-    import csv
-    from collections import defaultdict, Counter
+    from storage.data_merger import DataMerger
     from utils.log import logger
-    from config.paths import CSV_LOG_PATH
-
-    csv_path = CSV_LOG_PATH
-    county_map = defaultdict(lambda: {"count": 0, "top5": Counter()})
-    total_counter = Counter()
 
     try:
-        with open(csv_path, newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                county = (row.get("county") or "未知地區").strip()
-                scam_type = (row.get("scam_type") or "未分類").strip()
-                county_map[county]["count"] += 1
-                county_map[county]["top5"][scam_type] += 1
-                total_counter[scam_type] += 1
-    except FileNotFoundError:
-        logger.warning(f"找不到CSV檔案：{csv_path}，回傳空統計。")
+        # 使用新的資料合併器
+        merger = DataMerger()
+        detailed_stats = merger.get_detailed_fraud_stats()
+        
+        # 轉換資料格式以符合前端需求
+        county_counts = []
+        for county_data in detailed_stats['county_details']:
+            county_counts.append({
+                "county": county_data['county'],
+                "count": county_data['total_count'],
+                "csv_count": county_data['csv_count'],
+                "live_count": county_data['live_count'],
+                "top5": county_data['top5_scam_types']
+            })
+        
+        # 全域 top5 詐騙類型
+        top5_overall = detailed_stats['global_scam_types'][:5]
+        
+        return jsonify({
+            "county_counts": county_counts,
+            "top5": top5_overall,
+            "summary": detailed_stats['summary']
+        })
+        
     except Exception as e:
-        logger.error(f"讀取CSV統計發生錯誤：{e}", exc_info=True)
+        logger.error(f"獲取合併統計資料發生錯誤：{e}", exc_info=True)
+        # 發生錯誤時回傳空資料
+        return jsonify({
+            "county_counts": [],
+            "top5": [],
+            "summary": {
+                "total_counties": 0,
+                "total_csv_records": 0,
+                "total_live_records": 0,
+                "grand_total": 0
+            }
+        })
 
-    def to_top5_list(counter: Counter):
-        return [
-            {"type": scam_type, "count": count}
-            for scam_type, count in counter.most_common(5)
-        ]
 
-    county_count_list = [
-        {
-            "county": county,
-            "count": data["count"],
-            "top5": to_top5_list(data["top5"]) \
-                if isinstance(data["top5"], Counter) else data["top5"],
-        }
-        for county, data in county_map.items()
-    ]
+@api_bp.route("/data-merger/status", methods=["GET"])
+def data_merger_status():
+    """
+    獲取資料合併器的狀態資訊
+    
+    Returns:
+        JSON: 包含各資料來源的狀態
+    """
+    from storage.data_merger import DataMerger
+    from utils.log import logger
+    
+    try:
+        merger = DataMerger()
+        
+        # 檢查各資料來源狀態
+        csv_stats = merger.get_csv_statistics()
+        live_stats = merger.get_live_statistics()
+        
+        return jsonify({
+            "csv_source": {
+                "available": bool(csv_stats['total_records'] > 0),
+                "total_records": csv_stats['total_records'],
+                "counties": len(csv_stats['county_stats']),
+                "scam_types": len(csv_stats['scam_type_stats'])
+            },
+            "live_source": {
+                "available": bool(live_stats['county_stats']),
+                "source_type": live_stats['source'],
+                "counties": len(live_stats['county_stats']),
+                "total_count": sum(live_stats['county_stats'].values())
+            },
+            "merger_available": True
+        })
+        
+    except Exception as e:
+        logger.error(f"獲取資料合併器狀態失敗：{e}")
+        return jsonify({
+            "csv_source": {"available": False, "error": str(e)},
+            "live_source": {"available": False, "error": str(e)},
+            "merger_available": False
+        }), 500
 
-    top5_overall = to_top5_list(total_counter)
 
-    return jsonify({
-        "county_counts": county_count_list,
-        "top5": top5_overall
-    })
+@api_bp.route("/data-merger/export", methods=["POST"])
+def export_merged_data():
+    """
+    匯出合併後的資料為 JSON 檔案
+    
+    Returns:
+        JSON: 匯出操作結果
+    """
+    from storage.data_merger import DataMerger
+    from utils.log import logger
+    import os
+    
+    try:
+        merger = DataMerger()
+        
+        # 生成匯出檔案名稱（包含時間戳）
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_filename = f"merged_statistics_{timestamp}.json"
+        output_path = os.path.join(STORAGE_BASE_DIR, output_filename)
+        
+        # 執行匯出
+        success = merger.export_merged_data(output_path)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": "資料匯出成功",
+                "output_file": output_filename,
+                "output_path": output_path
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "資料匯出失敗"
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"匯出合併資料失敗：{e}")
+        return jsonify({
+            "success": False,
+            "message": f"匯出失敗：{str(e)}"
+        }), 500
+
+
+@api_bp.route("/data-merger/merge-summary", methods=["GET"])
+def get_merger_summary():
+    """
+    獲取資料合併的摘要資訊
+    
+    Returns:
+        JSON: 合併摘要
+    """
+    from storage.data_merger import DataMerger
+    from utils.log import logger
+    
+    try:
+        merger = DataMerger()
+        merge_result = merger.merge_statistics()
+        
+        return jsonify({
+            "merged_stats": merge_result['merged_county_stats'],
+            "csv_contribution": merge_result['csv_stats'],
+            "live_contribution": merge_result['live_stats'],
+            "summary": {
+                "total_counties": merge_result['total_counties'],
+                "total_count": merge_result['total_count'],
+                "sources_used": merge_result['sources_used']
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"獲取合併摘要失敗：{e}")
+        return jsonify({
+            "error": f"獲取合併摘要失敗：{str(e)}"
+        }), 500
