@@ -62,18 +62,22 @@ class GeoReverser:
             logger.error(f"地理位置反查失敗：{str(e)}")
             return "未知地區"
 
-    def update_location_stats(
-        self, 
-        county: str, 
-        stats_path: str = None
-    ) -> None:
+    def update_location_stats(self, county: str, stats_path: str = None) -> None:
         """
-        更新縣市查詢次數統計（儲存到JSON檔）
-        
-        Args:
-            county: 縣市名稱
-            stats_path: 統計檔案路徑
+        更新縣市查詢次數統計。優先寫入資料庫（LocationStatsDAO），若 MySQL 停用或失敗則回退 JSON。
         """
+        try:
+            from storage.location_stats_dao import LocationStatsDAO
+            dao = LocationStatsDAO()
+            if dao.enabled and dao.increment_live(county):
+                logger.info(f"縣市統計更新（DB）：{county}")
+                dao.close()
+                return
+            dao.close()
+        except Exception as e:
+            logger.warning(f"DB 統計更新失敗或未啟用，改寫入 JSON：{e}")
+
+        # Fallback: JSON file
         import json
         import os
         from config.paths import STORAGE_BASE_DIR
@@ -81,16 +85,11 @@ class GeoReverser:
         if not stats_path:
             stats_path = os.path.join(STORAGE_BASE_DIR, "location_stats.json")
 
-        # 讀取現有統計
         stats = {}
         if os.path.exists(stats_path):
             with open(stats_path, "r", encoding="utf-8") as f:
                 stats = json.load(f)
-        
-        # 更新次數
         stats[county] = stats.get(county, 0) + 1
-        logger.info(f"縣市統計更新：{county}（次數：{stats[county]}）")
-        
-        # 寫回檔案
+        logger.info(f"縣市統計更新（JSON）：{county}（次數：{stats[county]}）")
         with open(stats_path, "w", encoding="utf-8") as f:
             json.dump(stats, f, ensure_ascii=False, indent=2)
