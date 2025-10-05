@@ -11,6 +11,7 @@ from storage.memory_manager import MemoryManager
 from storage.csv_logger import CSVLogger
 from storage.mysql_logger import MySQLLogger
 from config.paths import STORAGE_BASE_DIR
+import storage.data_merger
 
 # 建立Blueprint
 api_bp = Blueprint("api", __name__)
@@ -405,3 +406,31 @@ def get_merger_summary():
         return jsonify({
             "error": f"獲取合併摘要失敗：{str(e)}"
         }), 500
+    
+@api_bp.route("/scam-types", methods=["GET"])
+def scam_types():
+    """
+    僅回傳詐騙手法統計（來源：CSV + 即時資料合併）
+    """
+    try:
+        from storage.data_merger import DataMerger
+        merger = DataMerger()
+        stats = merger.get_detailed_fraud_stats()
+    except Exception as e:
+        logger.error(f"獲取詐騙手法統計失敗：{e}", exc_info=True)
+        return jsonify({
+            "scam_types": [],
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "error": "無法取得詐騙手法統計"
+        })
+    
+    if not stats:
+        logger.warning("DataMerger 回傳空值，/scam-types 將提供空的詐騙手法列表。")
+        scam_types = []
+    else:
+        scam_types = stats.get("global_scam_types", []) or []
+    
+    return jsonify({
+        "scam_types": scam_types,
+        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
