@@ -25,15 +25,18 @@ main-165project/
 │  └─ line_webhook_routes.py # LINE Webhook（/line/webhook 與 /webhook）
 ├─ services/
 │  ├─ intent_classifier.py     # 意圖判斷
+│  ├─ _selftest_scam_check     # ---- 測試
 │  ├─ scam_classifier.py       # 詐騙類型分類
 │  ├─ scam_related_check.py    # 詐騙相關性檢查（含啟發式 + 嚴格 LLM 解析）
 │  └─ reply_formatter.py       # 回覆格式化
 ├─ src/
-│  ├─ data_loader.py     # 載入/建立 Chroma 向量庫
+│  ├─ analyze_text.py     # 
+│  ├─ data_loader.py      # 載入/建立 Chroma 向量庫
 │  ├─ query_engine.py     # 以 embedding 查詢向量庫
 │  ├─ response_generator.py # 以 Ollama 生成回覆（支援 brief/detailed）
 │  └─ line_handler.py     # LINE 事件處理（含 CA 憑證設定與 fallback）
 ├─ storage/
+│  ├─ data/              # embeddings.pkl
 │  ├─ csv_logger.py      # CSV 紀錄（供儀表板/統計使用）
 │  ├─ mysql_logger.py    # MySQL 可選紀錄（可停用）
 │  └─ data/              # 向量庫與原始資料（embeddings.pkl、chroma_db/ 等）

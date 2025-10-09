@@ -434,3 +434,76 @@ def scam_types():
         "scam_types": scam_types,
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     })
+
+@api_bp.route("/articles/extract", methods=["POST"])
+def extract_articles():
+    """
+    接收原始文章列表，擷取標題、發布單位、日期與內容連結。
+    請求格式：
+    {
+        "items": [
+            {"title": "...", "publisher": "...", "date": "...", "url": "..."},
+            ...
+        ]
+    }
+    回應格式：
+    {
+        "items": [...],
+        "missing": [...],
+        "requested": 10,
+        "total": 8
+    }
+    """
+    payload = request.get_json(silent=True) or {}
+    raw_items = payload.get("items")
+    if not isinstance(raw_items, list):
+        return jsonify({"error": "請提供 items 陣列。"}), 400
+
+    extracted: List[Dict[str, str]] = []
+    missing: List[Dict[str, object]] = []
+
+    for idx, item in enumerate(raw_items):
+        if not isinstance(item, dict):
+            missing.append({
+                "index": idx,
+                "missing_fields": ["title", "publisher", "published_at", "link"],
+                "reason": "項目必須為物件"
+            })
+            continue
+
+        normalized = {
+            "title": item.get("title") or item.get("name"),
+            "publisher": item.get("publisher") or item.get("agency"),
+            "published_at": item.get("published_at") or item.get("date"),
+            "link": item.get("link") or item.get("url") or item.get("id")
+        }
+
+        lacking = [field for field, value in normalized.items() if not value]
+        if lacking:
+            missing.append({"index": idx, "missing_fields": lacking})
+            continue
+
+        extracted.append(normalized)
+
+    logger.info(f"/articles/extract 成功擷取 {len(extracted)} 筆資料（共 {len(raw_items)} 筆）。")
+
+    return jsonify({
+        "items": extracted,
+        "missing": missing,
+        "requested": len(raw_items),
+        "total": len(extracted),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+@api_bp.route("/db/init", methods=["GET"])
+def db_init():
+    """
+    主動初始化資料庫與資料表，並回傳狀態。
+    """
+    try:
+        result = mysql_logger.init_db()
+        ok = result.get("enabled") and result.get("connected") and result.get("table_ready")
+        return jsonify({"mysql": result}), (200 if ok else 503)
+    except Exception as e:
+        logger.error(f"DB 初始化檢查失敗：{e}")
+        return jsonify({"mysql": {"enabled": mysql_logger.enabled, "error": str(e)}}), 500

@@ -34,7 +34,7 @@ embedding:
 
 # MySQL設定
 mysql:
-  enabled: false  # 若無資料庫或僅本機開發，設為 false 以停用 MySQL 紀錄
+  enabled: true  # 若無資料庫或僅本機開發，設為 false 以停用 MySQL 紀錄
   host: "localhost"
   port: 3306
   user: ""  # 從.env獲取

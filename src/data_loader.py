@@ -12,11 +12,55 @@ logger = logging.getLogger(__name__)
 class DataLoader:
     def __init__(self, config):
         self.config = config
-        self.client = chromadb.PersistentClient(path=CHROMA_DB_DIR)
+        # 延後初始化，避免在 import 階段就因為 sysdb 損毀而崩潰
+        self.client = None
         self.collection = None
         self.max_batch_size = 5461  # ChromaDB 最大批次限制
 
+    def _init_chroma_client(self, persist_dir: str = None, in_memory: bool = False):
+        """
+        初始化 chromadb client（可選 persist 或 in-memory）
+        """
+        persist_dir = persist_dir or CHROMA_DB_DIR
+        self.persist_directory = persist_dir
+        try:
+            if in_memory and hasattr(chromadb, "EphemeralClient"):
+                self.client = chromadb.EphemeralClient()
+                logger.info("已啟動 chromadb EphemeralClient（記憶體模式）")
+            else:
+                self.client = chromadb.PersistentClient(path=persist_dir)
+                logger.info(f"已啟動 chromadb PersistentClient：{persist_dir}")
+        except Exception as e:
+            logger.warning(f"初始化 chromadb client 失敗（in_memory={in_memory}）：{e}")
+            self.client = None
+
+    def _reset_chroma_store(self):
+        """
+        嘗試清理 chroma persist 目錄中常見的損壞檔案（sqlite / json），以便重建。
+        注意：此動作會清除 chromadb 的 metadata，請務必先備份。
+        """
+        persist_dir = getattr(self, "persist_directory", CHROMA_DB_DIR)
+        if not os.path.exists(persist_dir):
+            logger.info(f"chromadb persist 目錄不存在，無需清理：{persist_dir}")
+            return
+        logger.warning(f"嘗試清理 chromadb persist 目錄：{persist_dir}（請確認已備份）")
+        try:
+            for fname in os.listdir(persist_dir):
+                fpath = os.path.join(persist_dir, fname)
+                # 常見需刪除的：sqlite 檔、損壞的 json、lock 檔
+                if fname.endswith(".sqlite") or fname.endswith(".sqlite-shm") or fname.endswith(".sqlite-wal") or fname.endswith(".db") or fname.endswith(".lock") or fname.endswith(".json"):
+                    try:
+                        os.remove(fpath)
+                        logger.info(f"已刪除：{fpath}")
+                    except Exception as e:
+                        logger.warning(f"刪除檔案失敗：{fpath} -> {e}")
+        except Exception as e:
+            logger.error(f"清理 chromadb persist 目錄時發生錯誤：{e}")
+
     def load_embeddings(self):
+        """
+        載入 embeddings 並建立或取得 collection（包含容錯處理）
+        """
         def _try_load_pickle(path: str) -> Optional[Any]:
             try:
                 with open(path, "rb") as f:
@@ -86,17 +130,53 @@ class DataLoader:
                 logger.warning(f"解析嵌入資料結構失敗：{path} | {e}")
                 continue
 
+        # 初始化 chroma client（延後到這裡）
+        if self.client is None:
+            self._init_chroma_client(in_memory=False)
+            if self.client is None:
+                # 無法初始化 persistent，直接嘗試記憶體模式
+                self._init_chroma_client(in_memory=True)
+
+        # 建立/取得 collection，含自動修復與 fallback
+        def _ensure_collection() -> bool:
+            if not self.client:
+                return False
+            try:
+                self.collection = self.client.get_or_create_collection(name="demodocs")
+                return True
+            except KeyError as ke:
+                # 常見：sysdb 配置 JSON 損毀導致 '_type' KeyError
+                logger.error(f"取得 collection 時發生 KeyError：{ke}，嘗試清理並重建", exc_info=True)
+                self._reset_chroma_store()
+                self._init_chroma_client(in_memory=False)
+                try:
+                    if self.client:
+                        self.collection = self.client.get_or_create_collection(name="demodocs")
+                        return True
+                except Exception as e2:
+                    logger.error(f"清理後仍無法建立 collection：{e2}", exc_info=True)
+                    return False
+            except Exception as e:
+                logger.warning(f"建立/取得 collection 發生例外：{e}", exc_info=True)
+                return False
+
+        if not _ensure_collection():
+            # 改用記憶體模式作為最後手段
+            self._init_chroma_client(in_memory=True)
+            if not _ensure_collection():
+                logger.error("無法建立任何 chroma collection，放棄載入嵌入。")
+                self.collection = None
+                return False
+
         if embedded_data is None:
             # 全部失敗：建立空 collection，避免啟動失敗
             if not any(os.path.exists(p) for p in candidates):
                 logger.warning(f"找不到任何嵌入檔：{candidates}，建立空的collection")
             else:
                 logger.warning(f"所有候選嵌入檔無法讀取或格式不符：{candidates}，建立空的collection")
-            self.collection = self.client.get_or_create_collection(name="demodocs")
             return True
 
         # 寫入 ChromaDB
-        self.collection = self.client.get_or_create_collection(name="demodocs")
         batch_size = min(self.config["embedding"]["batch_size"], self.max_batch_size)
         total = len(embedded_data)
         for start in range(0, total, batch_size):
@@ -119,3 +199,9 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
     loader = DataLoader(config)
     loader.load_embeddings()
+
+# 說明：
+# - 在 health_check 中被呼叫：data_loader.load_embeddings(), get_collection()
+# - 檢查點：
+#   - 是否連接到向量資料庫或其他資料源（Milvus / Faiss / Pinecone / DB）
+#   - load_embeddings 是否會存取磁碟或遠端 DB

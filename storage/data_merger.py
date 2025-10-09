@@ -10,12 +10,14 @@
 import csv
 import json
 import os
+import socket
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime, date
 from collections import defaultdict, Counter
 from utils.log import logger
 from config.paths import CSV_LOG_PATH, STORAGE_BASE_DIR
 from storage.location_stats_dao import LocationStatsDAO
+from config import config
 
 
 class DataMerger:
@@ -31,7 +33,24 @@ class DataMerger:
         self.csv_path = csv_path
         self.location_dao = LocationStatsDAO()
         self.json_stats_path = os.path.join(STORAGE_BASE_DIR, "location_stats.json")
+        # 讀取 MySQL 設定（用於可用性檢查）
+        self.mysql_cfg = config.get("mysql", {})
+        self.mysql_enabled = bool(self.mysql_cfg.get("enabled", True))
     
+    def _is_mysql_available(self) -> bool:
+        """
+        輕量檢查 MySQL 是否可連線（避免反覆連線失敗造成大量錯誤）
+        """
+        if not self.mysql_enabled:
+            return False
+        host = self.mysql_cfg.get("host", "localhost")
+        port = int(self.mysql_cfg.get("port", 3306))
+        try:
+            with socket.create_connection((host, port), timeout=1.0):
+                return True
+        except Exception:
+            return False
+
     def get_csv_statistics(self) -> Dict:
         """
         從 CSV 檔案讀取並統計歷史資料
@@ -82,20 +101,21 @@ class DataMerger:
         Returns:
             Dict: 即時統計資料
         """
-        try:
-            # 嘗試從 MySQL 獲取資料
-            if self.location_dao.enabled:
-                live_data = self.location_dao.get_live_counts()
-                if live_data:
-                    county_stats = {county: count for county, count in live_data}
-                    logger.info(f"成功從 MySQL 獲取即時資料：{len(county_stats)} 個縣市")
-                    return {
-                        'county_stats': county_stats,
-                        'source': 'mysql'
-                    }
-        except Exception as e:
-            logger.warning(f"從 MySQL 獲取即時資料失敗：{e}")
-        
+        # 先做可用性檢查，避免 DAO 反覆連線失敗噴錯
+        if self._is_mysql_available():
+            try:
+                if getattr(self.location_dao, "enabled", True):
+                    live_data = self.location_dao.get_live_counts()
+                    if live_data:
+                        county_stats = {county: count for county, count in live_data}
+                        logger.info(f"成功從 MySQL 獲取即時資料：{len(county_stats)} 個縣市")
+                        return {
+                            'county_stats': county_stats,
+                            'source': 'mysql'
+                        }
+            except Exception as e:
+                logger.warning(f"從 MySQL 獲取即時資料失敗：{e}")
+
         # 嘗試從 JSON 獲取資料
         try:
             if os.path.exists(self.json_stats_path):
@@ -326,3 +346,11 @@ def merge_and_export(output_path: str = None) -> bool:
     """
     merger = DataMerger()
     return merger.export_merged_data(output_path)
+
+# 說明：
+# - 負責合併 CSV 與即時資料來源，並產生統計資料
+# - 常見方法：get_detailed_fraud_stats(), get_csv_statistics(), get_live_statistics(), export_merged_data(), merge_statistics()
+# - 檢查點：
+#   - 即時資料來源是否為 MySQL（或其他 DB），檢查 SQL 查詢或 ORM 使用
+#   - CSV 讀取與欄位解析是否正確
+#   - 若發生例外，應回傳安全的預設結構，避免 API 500

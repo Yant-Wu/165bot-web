@@ -55,3 +55,10 @@ class CSVLogger:
         except Exception as e:
             logger.error(f"寫入CSV日誌失敗：{str(e)}")
             return False
+
+# 說明：
+# - 寫入 CSV 檔案（用於日誌或離線統計）
+# - 檢查點：
+#   - 檔案路徑與輪替策略（append / 日誌分檔）
+#   - 欄位順序是否與 DataMerger 期望一致
+#   - 檔案鎖定/並發寫入處理

@@ -1,4 +1,5 @@
 import pymysql
+import socket
 from datetime import datetime
 from typing import Optional
 from utils.log import logger
@@ -9,9 +10,17 @@ class MySQLLogger:
         """
         初始化MySQL日誌器（從配置中獲取DB連線資訊）
         """
-        self.db_config = config["mysql"]
+        # 使用防呆的取法，避免 config 未設定 "mysql" 時拋錯
+        self.db_config = config.get("mysql", {})
         self.conn: Optional[pymysql.connections.Connection] = None
         self.enabled = bool(self.db_config.get("enabled", True))
+
+    def _port_open(self, host: str, port: int) -> bool:
+        try:
+            with socket.create_connection((host, port), timeout=1.0):
+                return True
+        except Exception:
+            return False
 
     def _connect(self) -> bool:
         """
@@ -26,16 +35,22 @@ class MySQLLogger:
             return False
 
         # 檢查基本設定
+        # 必要欄位檢查（但允許使用預設 host/port/db_name）
         if not self.db_config.get("user") or not self.db_config.get("password"):
-            logger.warning("MySQL 帳密未設定，略過 MySQL 紀錄。")
+            logger.warning("MySQL 帳號或密碼未設定，略過 MySQL 紀錄。")
             return False
 
         try:
-            host = self.db_config["host"]
+            host = self.db_config.get("host", "localhost")
             port = int(self.db_config.get("port", 3306))
-            user = self.db_config["user"]
-            password = self.db_config["password"]
-            db_name = self.db_config["db_name"]
+            user = self.db_config.get("user")
+            password = self.db_config.get("password")
+            db_name = self.db_config.get("db_name") or self.db_config.get("database") or "scam_logs_db"
+
+            # 先檢查埠是否可連線，避免長時間逾時與錯誤
+            if not self._port_open(host, port):
+                logger.warning(f"MySQL 服務無法連線（{host}:{port}），略過 MySQL 紀錄。")
+                return False
 
             # 先嘗試無資料庫連線，用於自動建立資料庫
             tmp_conn = pymysql.connect(
@@ -44,7 +59,7 @@ class MySQLLogger:
                 user=user,
                 password=password,
                 charset="utf8mb4",
-                connect_timeout=5
+                connect_timeout=2
             )
             try:
                 with tmp_conn.cursor() as cursor:
@@ -65,12 +80,17 @@ class MySQLLogger:
                 password=password,
                 database=db_name,
                 charset="utf8mb4",
-                connect_timeout=5
+                connect_timeout=2
             )
             logger.info("成功連接MySQL資料庫")
             return True
         except Exception as e:
-            logger.error(f"MySQL連線失敗：{str(e)}")
+            # 連線被拒絕等預期情況，用 warning 降噪
+            msg = str(e)
+            if "Connection refused" in msg or "2003" in msg:
+                logger.warning(f"MySQL連線失敗：{msg}")
+            else:
+                logger.error(f"MySQL連線失敗：{msg}")
             self.conn = None
             return False
 
@@ -160,5 +180,31 @@ class MySQLLogger:
                 if self.conn:
                     self.conn.close()
                     logger.info("MySQL連線已關閉")
+            except Exception:
+                pass
+
+    def init_db(self):
+        """
+        主動初始化資料庫與資料表，並回傳狀態。
+        Returns:
+            dict: {"enabled": bool, "connected": bool, "table_ready": bool, "error": str|None}
+        """
+        result = {"enabled": self.enabled, "connected": False, "table_ready": False, "error": None}
+        if not self.enabled:
+            return result
+        try:
+            if not self._connect():
+                result["error"] = "connect failed"
+                return result
+            result["connected"] = True
+            result["table_ready"] = bool(self._create_table())
+            return result
+        except Exception as e:
+            result["error"] = str(e)
+            return result
+        finally:
+            try:
+                if self.conn:
+                    self.conn.close()
             except Exception:
                 pass

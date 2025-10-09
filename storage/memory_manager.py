@@ -111,3 +111,10 @@ class MemoryManager:
         except Exception as e:
             logger.error(f"清除使用者({session_id})記憶失敗：{str(e)}")
             return False
+
+# 說明：
+# - 管理每個 session 的記憶（get_user_memory / update_user_memory / clear_user_memory）
+# - 檢查點：
+#   - 記憶儲存位置（檔案系統、SQLite、Redis、或 MySQL）
+#   - 資料格式（history, memory 結構）
+#   - 同時存取與資料一致性
