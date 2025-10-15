@@ -46,8 +46,15 @@
             <div class="chatbox" id="chatbox"></div>
             <div class="input-area">
                 <input type="text" id="questionInput" placeholder="請輸入你的問題..." />
-                <!-- 修改位置 3：將送出按鈕改為 home.html 的按鈕樣式 -->
+                <!-- 修改：保留送出按鈕，並在最右側新增導向 /voice 的按鈕（改為 SVG 圖示） -->
                 <button class="chat-now-btn" onclick="sendQuestion()">送出</button>
+                <a href="/voice" class="voice-btn-right" title="語音操作 (前往 /voice)" aria-label="語音操作">
+                    <!-- microphone SVG (簡潔、可縮放) -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z" fill="#fff"/>
+                        <path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V21a1 1 0 0 0 2 0v-3.08A7 7 0 0 0 19 11z" fill="#fff" opacity="0.9"/>
+                    </svg>
+                </a>
             </div>
         </div>
     </div>
