@@ -12,6 +12,12 @@ from storage.csv_logger import CSVLogger
 from storage.mysql_logger import MySQLLogger
 from config.paths import STORAGE_BASE_DIR
 import storage.data_merger
+from config import config
+import pymysql
+import os
+import sqlite3
+from typing import Dict, Any
+from tools.import_csv_to_mysql import import_csv_to_mysql
 
 # 建立Blueprint
 api_bp = Blueprint("api", __name__)
@@ -507,3 +513,175 @@ def db_init():
     except Exception as e:
         logger.error(f"DB 初始化檢查失敗：{e}")
         return jsonify({"mysql": {"enabled": mysql_logger.enabled, "error": str(e)}}), 500
+
+@api_bp.route("/db/status", methods=["GET"])
+def db_status():
+    """
+    檢查 MySQL 資料庫與 scam_logs 表是否存在，並回傳簡易統計。
+    回傳 JSON 範例：
+    {
+      "connected": true,
+      "database_exists": true,
+      "table_exists": true,
+      "record_count": 123,
+      "error": null
+    }
+    """
+    mysql_cfg = config.get("mysql", {})
+    enabled = bool(mysql_cfg.get("enabled", True))
+    host = mysql_cfg.get("host", "localhost")
+    port = int(mysql_cfg.get("port", 3306))
+    user = mysql_cfg.get("user")
+    password = mysql_cfg.get("password")
+    db_name = mysql_cfg.get("db_name") or mysql_cfg.get("database") or "scam_logs_db"
+
+    if not enabled:
+        return jsonify({
+            "connected": False,
+            "database_exists": False,
+            "table_exists": False,
+            "record_count": 0,
+            "error": "MySQL 已在設定中被停用（mysql.enabled=false）"
+        }), 503
+
+    if not user or not password:
+        return jsonify({
+            "connected": False,
+            "database_exists": False,
+            "table_exists": False,
+            "record_count": 0,
+            "error": "MySQL 帳號或密碼未設定於 config"
+        }), 500
+
+    try:
+        conn = pymysql.connect(
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            charset="utf8mb4",
+            connect_timeout=2,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+    except Exception as e:
+        logger.warning(f"DB 連線失敗：{e}")
+        return jsonify({
+            "connected": False,
+            "database_exists": False,
+            "table_exists": False,
+            "record_count": 0,
+            "error": str(e)
+        }), 503
+
+    try:
+        with conn.cursor() as cur:
+            # 檢查資料庫是否存在
+            cur.execute("SHOW DATABASES LIKE %s", (db_name,))
+            db_exists = bool(cur.fetchone())
+
+            table_exists = False
+            record_count = None
+            if db_exists:
+                # 針對目標資料庫查表與筆數
+                cur.execute(f"USE `{db_name}`;")
+                cur.execute("SHOW TABLES LIKE 'scam_logs';")
+                table_exists = bool(cur.fetchone())
+                if table_exists:
+                    try:
+                        cur.execute("SELECT COUNT(*) AS cnt FROM scam_logs;")
+                        row = cur.fetchone()
+                        record_count = int(row["cnt"]) if row and "cnt" in row else 0
+                    except Exception as e_count:
+                        # 若 table 存在但查詢失敗，記錄警告但不中斷
+                        logger.warning(f"查詢 scam_logs 筆數失敗：{e_count}")
+                        record_count = None
+
+        return jsonify({
+            "connected": True,
+            "database_exists": db_exists,
+            "table_exists": table_exists,
+            "record_count": record_count if record_count is not None else 0,
+            "error": None
+        }), 200
+
+    except Exception as e:
+        logger.error(f"檢查資料庫狀態發生錯誤：{e}", exc_info=True)
+        return jsonify({
+            "connected": True,
+            "database_exists": False,
+            "table_exists": False,
+            "record_count": 0,
+            "error": str(e)
+        }), 500
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+@api_bp.route("/admin/import-csv", methods=["POST"])
+def admin_import_csv():
+    """
+    管理員 API：將 CSV 匯入 MySQL（使用 tools/import_csv_to_mysql.import_csv_to_mysql）
+    POST JSON 可選參數：
+      { "csv_path": "...", "run": true, "limit": 100 }
+    若 run 為 true 則執行實際寫入，預設為 dry-run。
+    """
+    try:
+        payload = request.get_json(silent=True) or {}
+        csv_path = payload.get("csv_path")
+        run_real = bool(payload.get("run", False))
+        limit = payload.get("limit")
+        ok = import_csv_to_mysql(csv_path=csv_path, dry_run=not run_real, limit=limit)
+        return jsonify({"success": bool(ok), "dry_run": not run_real}), (200 if ok else 500)
+    except Exception as e:
+        logger.error(f"admin/import-csv 失敗：{e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+        
+
+@api_bp.route("/admin/migrate-sqlite-to-mysql", methods=["POST"])
+def admin_migrate_sqlite_to_mysql():
+    """
+    管理員 API：將本地 sqlite (scam_logs.db) 的資料搬到 MySQL。
+    POST JSON 可選參數：
+      { "sqlite_path": "...", "limit": 1000 }
+    回傳插入成功/失敗筆數。
+    """
+    try:
+        payload = request.get_json(silent=True) or {}
+        sqlite_path = payload.get("sqlite_path") or os.path.join(STORAGE_BASE_DIR, "scam_logs.db")
+        limit = payload.get("limit")
+
+        if not os.path.exists(sqlite_path):
+            return jsonify({"success": False, "error": f"sqlite file not found: {sqlite_path}"}), 400
+
+        mysql_logger = MySQLLogger()
+        # 嘗試初始化 DB/table（靜默處理）
+        mysql_logger.init_db()
+
+        # 讀 sqlite 資料
+        conn = sqlite3.connect(sqlite_path)
+        cur = conn.cursor()
+        q = "SELECT timestamp, county, user_input, scam_type FROM scam_logs"
+        if limit:
+            q += f" LIMIT {int(limit)}"
+        cur.execute(q)
+        rows = cur.fetchall()
+        conn.close()
+
+        inserted = 0
+        failed = 0
+        for ts, county, user_input, scam_type in rows:
+            try:
+                ok = mysql_logger.log_scam(user_input or "", scam_type or "未分類", county or "未知地區")
+                if ok:
+                    inserted += 1
+                else:
+                    failed += 1
+            except Exception:
+                failed += 1
+
+        return jsonify({"success": True, "inserted": inserted, "failed": failed, "rows": len(rows)}), 200
+    except Exception as e:
+        logger.error(f"admin/migrate-sqlite-to-mysql 失敗：{e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
