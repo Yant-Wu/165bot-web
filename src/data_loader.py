@@ -4,7 +4,8 @@ import chromadb
 import logging
 import yaml
 from typing import Any, List, Tuple, Optional
-from config.paths import CHROMA_DB_DIR, EMBEDDINGS_PATH, EMBEDDINGS_V2_PATH
+# 確保 V3 已經從 config.paths 匯入
+from config.paths import CHROMA_DB_DIR, EMBEDDINGS_PATH, EMBEDDINGS_V2_PATH ,EMBEDDINGS_V3_PATH
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -108,13 +109,24 @@ class DataLoader:
             # 不支援的格式
             raise ValueError("未知的嵌入資料格式，請確認檔案內容。")
 
-        primary = EMBEDDINGS_V2_PATH if os.path.exists(EMBEDDINGS_V2_PATH) else EMBEDDINGS_PATH
-        backup = EMBEDDINGS_PATH if primary == EMBEDDINGS_V2_PATH else EMBEDDINGS_V2_PATH
+        # --- 【這裏是唯一的修改點】 ---
+        # 建立一個包含所有可能路徑的優先級列表
+        # 優先順序: V3 -> V2 -> V1 (EMBEDDINGS_PATH)
         candidates = []
-        # 去重且保序
-        for p in [primary, backup]:
-            if p and p not in candidates:
+        priority_paths = [EMBEDDINGS_V3_PATH, EMBEDDINGS_V2_PATH, EMBEDDINGS_PATH]
+        
+        for p in priority_paths:
+            # 檢查路徑是否存在 (os.path.exists) 且不重複
+            if p and os.path.exists(p) and p not in candidates:
                 candidates.append(p)
+        
+        if not candidates:
+             # Log 警告，但讓程式繼續，以便建立空 collection
+             logger.warning(f"找不到任何嵌入檔。已檢查路徑：{priority_paths}")
+        else:
+            logger.info(f"找到候選 embeddings 檔案，讀取順序：{candidates}")
+        # --- 【修改結束】 ---
+
 
         embedded_data = None
         used_path = None
@@ -142,6 +154,7 @@ class DataLoader:
             if not self.client:
                 return False
             try:
+                # --- 注意：這裡的 "demodocs" 是您 collection 的名稱 ---
                 self.collection = self.client.get_or_create_collection(name="demodocs")
                 return True
             except KeyError as ke:
@@ -157,7 +170,12 @@ class DataLoader:
                     logger.error(f"清理後仍無法建立 collection：{e2}", exc_info=True)
                     return False
             except Exception as e:
+                # 捕捉您在 Log 中遇到的 'dict' object cannot be converted to 'PyString' 錯誤
                 logger.warning(f"建立/取得 collection 發生例外：{e}", exc_info=True)
+                # 觸發清理，以便下次重啟時修復
+                if "cannot be converted to 'PyString'" in str(e):
+                    logger.error("偵測到 ChromaDB 嚴重損毀 (PyString 錯誤)，正在執行清理...")
+                    self._reset_chroma_store()
                 return False
 
         if not _ensure_collection():
@@ -170,23 +188,47 @@ class DataLoader:
 
         if embedded_data is None:
             # 全部失敗：建立空 collection，避免啟動失敗
-            if not any(os.path.exists(p) for p in candidates):
-                logger.warning(f"找不到任何嵌入檔：{candidates}，建立空的collection")
-            else:
-                logger.warning(f"所有候選嵌入檔無法讀取或格式不符：{candidates}，建立空的collection")
+            logger.warning(f"所有候E選嵌入檔無法讀取或格式不符，建立空的collection")
             return True
 
         # 寫入 ChromaDB
+        # 檢查是否需要填充
+        try:
+            count = self.collection.count()
+            if count >= len(embedded_data):
+                logger.info(f"Collection '{self.collection_name}' 中已有 {count} 筆資料 (>= {len(embedded_data)})，無需填充。")
+                return True
+            else:
+                 logger.info(f"Collection 中有 {count} 筆資料，少於嵌入檔的 {len(embedded_data)} 筆，開始填充...")
+        except Exception as e:
+            logger.warning(f"檢查 collection count 失敗：{e}，強制執行填充...")
+
+
         batch_size = min(self.config["embedding"]["batch_size"], self.max_batch_size)
         total = len(embedded_data)
+        
+        ids = [f"id_{i}" for i in range(total)]
+        documents = [doc for doc, _ in embedded_data]
+        embeddings = [emb for _, emb in embedded_data]
+
         for start in range(0, total, batch_size):
             end = min(start + batch_size, total)
-            batch = embedded_data[start:end]
-            ids = [str(i + start) for i in range(len(batch))]
-            documents = [doc for doc, _ in batch]
-            embeddings = [emb for _, emb in batch]
-            logger.info(f"載入批次：{start} 到 {end}，大小：{len(batch)}")
-            self.collection.upsert(ids=ids, embeddings=embeddings, documents=documents)
+            batch_ids = ids[start:end]
+            batch_docs = documents[start:end]
+            batch_embs = embeddings[start:end]
+            
+            logger.info(f"載入批次：{start} 到 {end}，大小：{len(batch_ids)}")
+            try:
+                self.collection.upsert(
+                    ids=batch_ids, 
+                    embeddings=batch_embs, 
+                    documents=batch_docs
+                )
+            except Exception as e:
+                logger.error(f"Upsert 批次 {start}-{end} 失敗：{e}")
+                # 這裡發生錯誤也可能導致下次啟動失敗，觸發清理
+                self._reset_chroma_store()
+                return False # 中止載入
 
         logger.info(f"嵌入資料載入完成（來源：{used_path}，總數：{total}）")
         return True
@@ -199,9 +241,3 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
     loader = DataLoader(config)
     loader.load_embeddings()
-
-# 說明：
-# - 在 health_check 中被呼叫：data_loader.load_embeddings(), get_collection()
-# - 檢查點：
-#   - 是否連接到向量資料庫或其他資料源（Milvus / Faiss / Pinecone / DB）
-#   - load_embeddings 是否會存取磁碟或遠端 DB

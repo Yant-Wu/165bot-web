@@ -11,6 +11,7 @@ TAIWAN_MAP_PATH = os.path.join(DATA_DIR, "taiwan-map.json")  # 台灣地圖數�
 CITY_STATISTICS_PATH = os.path.join(DATA_DIR, "city_statistics.json")  # 城市統計數據
 EMBEDDINGS_PATH = os.path.join(DATA_DIR, "embeddings.pkl")  # 嵌入向量文件
 EMBEDDINGS_V2_PATH = os.path.join(DATA_DIR, "embeddings_2.pkl")  # 新版本嵌入向量
+EMBEDDINGS_V3_PATH = os.path.join(DATA_DIR, "embeddings_v3.pkl")  # 版本3嵌入向量
 
 # Chroma向量資料庫路徑
 CHROMA_DB_DIR = os.path.join(DATA_DIR, "chroma_db")

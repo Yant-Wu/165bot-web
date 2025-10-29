@@ -29,7 +29,7 @@ chroma:
 
 # 嵌入向量設定
 embedding:
-  file: "storage/data/embeddings.pkl"  # 嵌入向量檔案路徑
+  file: "storage/data/embeddings_v3.pkl"  # 嵌入向量檔案路徑
   batch_size: 1000  # 批次大小
 
 # MySQL設定
