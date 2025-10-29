@@ -9,7 +9,7 @@ class ReplyFormatter:
         answer: str
     ) -> bool:
         """
-        判斷是否需要格式化回覆（僅「描述事件」且詐騙類型可分類時格式化）
+        判斷是否需要格式化回覆
         
         Args:
             intent: 使用者意圖
@@ -19,7 +19,7 @@ class ReplyFormatter:
         Returns:
             bool: 需要格式化返回True，否則False
         """
-        # 排除拒絕類回覆（如「無法回答非詐騙問題」）
+        # 排除拒絕類回覆
         reject_keywords = [
             "我只能回答詐騙相關問題",
             "請提供更多資訊",
@@ -29,8 +29,17 @@ class ReplyFormatter:
         if any(keyword in answer for keyword in reject_keywords):
             return False
         
-        # 僅「描述事件」且詐騙類型不為「無法分類」時格式化
-        return intent == "描述事件" and scam_type != "無法分類"
+        # --- 【修改點 2：修改格式化條件】 ---
+        # 只要意圖是「描述事件」，且 (AI 認為可分類 OR RAG 判斷為低風險)，就格式化
+        if intent == "描述事件":
+            if scam_type != "無法分類":
+                return True
+            # 讓 RAG 的判斷（低風險）也能觸發格式化
+            if re.search(r"(詐騙風險\s*[:：]\s*低)", answer, re.IGNORECASE):
+                return True
+        
+        return False
+        # --- 【修改結束 2】 ---
 
     @staticmethod
     def format_reply(
@@ -53,7 +62,13 @@ class ReplyFormatter:
         derived_level, cleaned = ReplyFormatter._derive_risk_and_clean(answer)
         final_level = (risk_level or derived_level or "高")
 
-        return f"""📌 詐騙類型：{scam_type}
+        # --- 【修改點 3：如果類型是 "無法分類"，但在這是低風險，給予客製化標題】 ---
+        type_display = scam_type
+        if scam_type == "無法分類" and final_level == "低":
+            type_display = "一般事件（非詐騙）"
+        # --- 【修改結束 3】 ---
+
+        return f"""📌 詐騙類型：{type_display}
 📊 詐騙風險：{final_level}
 
 🔍 分析內容：
@@ -69,12 +84,7 @@ class ReplyFormatter:
     def _derive_risk_and_clean(answer: str) -> Tuple[Optional[str], str]:
         """
         從原始回答中抽取風險等級（若有），並清理重覆的標題/建議區塊與機率字樣。
-
-        規則：
-        - 先移除行首的「📌 詐騙類型：...」「📊 詐騙機率/風險：...」等標題行
-        - 若偵測到百分比，>=60 → 高，否則低；把原百分比替換成「高/低」或直接移除
-        - 若內文已含「🧠 查證建議」段落，截斷其後內容，避免與統一建議重覆
-        - 若內文已有「詐騙風險：高/低」用詞，也可作為風險來源
+        (此函式保持不變)
         """
         if not answer:
             return None, ""
@@ -108,9 +118,9 @@ class ReplyFormatter:
 
         # 若未由百分比取得，嘗試從文字判斷
         if risk_level is None:
-            if re.search(r"(高風險|風險\s*[：:]\s*高)", answer):
+            if re.search(r"(高風險|風險\s*[：:]\s*高)", answer, re.IGNORECASE):
                 risk_level = "高"
-            elif re.search(r"(低風險|風險\s*[：:]\s*低)", answer):
+            elif re.search(r"(低風險|風險\s*[：:]\s*低)", answer, re.IGNORECASE):
                 risk_level = "低"
 
         # 將殘留的「詐騙機率」字樣正規化為「詐騙風險」，並移除數字
@@ -130,7 +140,7 @@ class ReplyFormatter:
 
         # 若清理後內容為空，提供預設占位文字，避免出現空白區塊
         if not s:
-            s = "（本次輸入內容過短，無法提供進一步分析。）"
+            s = "（無法提供進一步分析，請確認事件描述是否完整。）"
 
         return risk_level, s
 
@@ -138,12 +148,7 @@ class ReplyFormatter:
     def get_default_reply(intent: str) -> str:
         """
         獲取預設回覆（針對「閒聊」「詢問功能」等意圖）
-        
-        Args:
-            intent: 使用者意圖
-        
-        Returns:
-            str: 預設回覆
+        (此函式保持不變)
         """
         if intent == "閒聊":
             return "🤖 我是詐騙分析機器人，能協助判斷詐騙並提供風險分析。如有疑問請隨時提問！"
