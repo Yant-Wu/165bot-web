@@ -27,8 +27,12 @@ storage/memory.json
 # Embeddings & Vector DB
 storage/data/embeddings.pkl
 storage/data/embeddings_2.pkl
+storage/data/embeddings_v3.pkl
 storage/data/chroma_db/
 *.sqlite3
+/tools/QA.json
+/tools/sop_knowledge_base.json
+
 
 # Old folder used during runs (if any)
 scam_analysis/
